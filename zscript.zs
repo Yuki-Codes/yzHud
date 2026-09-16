@@ -121,6 +121,8 @@ class YzHud : BaseStatusBar
                 index++;
             }
         }
+        
+        DrawPrompt();
     }
     
     TextureID GetPowerupIcon(Powerup powerup)
@@ -143,4 +145,61 @@ class YzHud : BaseStatusBar
             
         return powerup.GetPowerupIcon();
     }
+    
+    
+    void DrawPrompt()
+    {
+		let player = players[consoleplayer];
+		let mo = player.mo;
+        
+		// Do nothing if this player is a voodoo doll, or is dead:
+		if (!mo || mo.health <= 0 || !mo.player || !mo.player.mo || mo.player.mo != mo)
+            return;
+
+		let tracer = new('PromptDetector');
+		if (!tracer)
+            return;
+        
+		// Fire from player's screen center:
+		Vector3 start = (mo.pos.xy, player.viewz);
+		Vector3 dir = (Actor.AngleToVector(mo.angle, cos(mo.pitch)), -sin(mo.pitch));
+		tracer.Trace(start, mo.cursector, dir, mo.radius + mo.userange, traceflags: 0, wallmask: 0, ignore: mo);
+        
+		// And check that the actor is interactable:
+		if (tracer.results.HitType == TRACE_HitWall)
+		{
+            let line = tracer.results.HitLine;
+            
+            if (line.activation == SPAC_Use)
+            {
+                let [useKey1, useKey2] = bindings.GetKeysForCommand("+use");
+			    String keyname = bindings.NameKeys(useKey1, 0);
+                String prompt = String.Format("[%s]",  keyname);
+            
+                DrawString(
+                    m_smallFont,
+                    prompt,
+                    (0, 64),
+                    DI_SCREEN_CENTER | DI_TEXT_ALIGN_CENTER);
+            }
+		}
+    }
+}
+
+// Very simple custom linetracer that detects when it hits an actor:
+class PromptDetector : LineTracer
+{
+	override ETraceStatus TraceCallback()
+	{
+		switch (results.HitType)
+		{
+			case TRACE_HitActor:
+			case TRACE_HitFloor:
+			case TRACE_HitCeiling:
+			case TRACE_HitWall:
+				return TRACE_Stop;
+				break;
+		}
+		return TRACE_Skip;
+	}
 }

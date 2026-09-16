@@ -1,4 +1,4 @@
 Gameinfo
 {
-    StatusBarClass = "SmallHud"
+    StatusBarClass = "YzHud"
 }
