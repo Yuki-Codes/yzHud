@@ -1,10 +1,12 @@
 version "5.00"
 
 #include "powerups.zs"
+#include "keys.zs"
 
 class YzHud : BaseStatusBar
 {
     YzPowerupBar m_powerups;
+    YzKeyBar m_keys;
     
     HUDFont m_bigFont;
     HUDFont m_smallFont;
@@ -18,6 +20,10 @@ class YzHud : BaseStatusBar
         m_powerups = new("YzPowerupBar");
         m_powerups.m_hud = self;
         m_powerups.m_font = m_smallFont;
+        
+        m_keys = new("YzKeyBar");
+        m_keys.m_hud = self;
+        m_keys.m_font = m_smallFont;
     }
 
     override void Draw(int state, double ticFrac)
@@ -83,67 +89,10 @@ class YzHud : BaseStatusBar
                 translation: Font.CR_Red);
         }
         
-        // Keys
-        int xPos = 70;
-        int yPos = -15;
-        for (int i = 0; i < Key.GetKeyTypeCount(); i++)
-        {
-            class<Key> keyclass = Key.GetKeyType(i);
-            let key = CPlayer.mo.FindInventory(keyclass);
-            if (key)
-            {
-                TextureId icon = GetKeyIcon(Key(key));
-                if (icon.IsValid())
-                {
-                    DrawTexture(
-                        icon,
-                        (xPos, yPos),
-                        DI_SCREEN_CENTER_BOTTOM | DI_ITEM_CENTER,
-                        1.0,
-                        (12, 12));
-                        
-                    xPos += 10;
-                }
-                else
-                {
-                    DrawString(
-                        m_smallFont,
-                        String.Format("%s", key.GetClassName()),
-                        (xPos, yPos),
-                        DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_LEFT,
-                        translation: Font.CR_GREY);
-                        
-                    xPos += 100;
-                }
-            }
-        }
-        
         m_powerups.Draw(cPlayer, ticFrac, -70, -15);
+        m_keys.Draw(cPlayer, ticFrac, 70, -15);
         
         DrawPrompt();
-    }
-    
-    TextureID GetKeyIcon(Key key)
-    {
-        if (key.GetClass() == "RedCard")
-            return TexMan.CheckForTexture("RKEYA0");
-            
-        if (key.GetClass() == "BlueCard")
-            return TexMan.CheckForTexture("BKEYA0");
-            
-        if (key.GetClass() == "YellowCard")
-            return TexMan.CheckForTexture("YKEYA0");
-            
-        if (key.GetClass() == "RedSkull")
-            return TexMan.CheckForTexture("RSKUA0");
-            
-        if (key.GetClass() == "BlueSkull")
-            return TexMan.CheckForTexture("BSKUA0");
-            
-        if (key.GetClass() == "YellowSkull")
-            return TexMan.CheckForTexture("YSKUA0");
-            
-        return -1;
     }
     
     void DrawPrompt()
