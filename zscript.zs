@@ -1,7 +1,11 @@
 version "5.00"
 
+#include "powerups.zs"
+
 class YzHud : BaseStatusBar
 {
+    YzPowerupBar m_powerups;
+    
     HUDFont m_bigFont;
     HUDFont m_smallFont;
     
@@ -10,6 +14,10 @@ class YzHud : BaseStatusBar
         super.Init();
         m_bigFont = HUDFont.Create(Font.FindFont('BigFont'));
         m_smallFont = HUDFont.Create(Font.FindFont('SmallFont'));
+        
+        m_powerups = new("YzPowerupBar");
+        m_powerups.m_hud = self;
+        m_powerups.m_font = m_smallFont;
     }
 
     override void Draw(int state, double ticFrac)
@@ -29,7 +37,10 @@ class YzHud : BaseStatusBar
             DI_SCREEN_CENTER_BOTTOM | DI_ITEM_CENTER_BOTTOM);
         
         // Mugshot
-        DrawTexture(GetMugShot(5), (0, -5), DI_SCREEN_CENTER_BOTTOM|DI_ITEM_CENTER_BOTTOM);
+        DrawTexture(
+            GetMugShot(5),
+            (0, -5),
+            DI_SCREEN_CENTER_BOTTOM | DI_ITEM_CENTER_BOTTOM);
 
         // Health
         DrawString(
@@ -73,79 +84,67 @@ class YzHud : BaseStatusBar
         }
         
         // Keys
+        int xPos = 70;
+        int yPos = -15;
         for (int i = 0; i < Key.GetKeyTypeCount(); i++)
         {
             class<Key> keyclass = Key.GetKeyType(i);
             let key = CPlayer.mo.FindInventory(keyclass);
             if (key)
             {
-                DrawInventoryIcon(
-                    key,
-                    (75 + (i * 9), -10),
-                    DI_SCREEN_CENTER_BOTTOM | DI_ITEM_CENTER,
-                    boxSize: (32, 32));
-            }
-        }
-        
-        // powerups
-        int index = 0;
-        for (let iitem = CPlayer.mo.Inv; iitem != NULL; iitem = iitem.Inv)
-		{    
-            int xPos = -80 - (index * 38);
-            int yPos = -15;
-            let powerup = Powerup(iitem);
-            if (powerup)
-			{
-                TextureID icon = GetPowerupIcon(powerup);
-                
+                TextureId icon = GetKeyIcon(Key(key));
                 if (icon.IsValid())
                 {
                     DrawTexture(
                         icon,
                         (xPos, yPos),
-                        DI_SCREEN_CENTER_BOTTOM | DI_ITEM_RIGHT | DI_ITEM_TOP,
+                        DI_SCREEN_CENTER_BOTTOM | DI_ITEM_CENTER,
                         1.0,
-                        (10, 10));
+                        (12, 12));
+                        
+                    xPos += 10;
                 }
-                
-                // Get the amount of seconds left (tics / ticrate).
-                int secondsLeft = int(Ceil(double(powerup.EffectTics) / GameTicRate));
-                
-                DrawString(
-                    m_smallFont,
-                    FormatNumber(secondsLeft, 4),
-                    (xPos - 6, yPos + 1),
-                    DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_LEFT,
-                    translation: Font.CR_GREY);
-                    
-                index++;
+                else
+                {
+                    DrawString(
+                        m_smallFont,
+                        String.Format("%s", key.GetClassName()),
+                        (xPos, yPos),
+                        DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_LEFT,
+                        translation: Font.CR_GREY);
+                        
+                    xPos += 100;
+                }
             }
         }
+        
+        m_powerups.Draw(cPlayer, ticFrac, -70, -15);
         
         DrawPrompt();
     }
     
-    TextureID GetPowerupIcon(Powerup powerup)
+    TextureID GetKeyIcon(Key key)
     {
-        if (powerup.GetClass() == "PowerIronFeet")
-            return TexMan.CheckForTexture("rad");
+        if (key.GetClass() == "RedCard")
+            return TexMan.CheckForTexture("RKEYA0");
             
-        if (powerup.GetClass() == "PowerInvisibility")
-            return TexMan.CheckForTexture("PINSA0");
+        if (key.GetClass() == "BlueCard")
+            return TexMan.CheckForTexture("BKEYA0");
             
-        if (powerup.GetClass() == "PowerInvulnerable")
-            return TexMan.CheckForTexture("PINVA0");
+        if (key.GetClass() == "YellowCard")
+            return TexMan.CheckForTexture("YKEYA0");
             
-        /*
-        if (powerup.GetClass() == "PowerStrength")
-        if (powerup.GetClass() == "PowerInvisibility")
-        if (powerup.GetClass() == "PowerLightAmp")
-        if (powerup.GetClass() == "PowerFlight")
-        */
+        if (key.GetClass() == "RedSkull")
+            return TexMan.CheckForTexture("RSKUA0");
             
-        return powerup.GetPowerupIcon();
+        if (key.GetClass() == "BlueSkull")
+            return TexMan.CheckForTexture("BSKUA0");
+            
+        if (key.GetClass() == "YellowSkull")
+            return TexMan.CheckForTexture("YSKUA0");
+            
+        return -1;
     }
-    
     
     void DrawPrompt()
     {
@@ -169,12 +168,28 @@ class YzHud : BaseStatusBar
 		if (tracer.results.HitType == TRACE_HitWall)
 		{
             let line = tracer.results.HitLine;
-            
-            if (line.activation == SPAC_Use)
+            if (line.activation == SPAC_Use || line.activation == SPAC_UseThrough)
             {
                 let [useKey1, useKey2] = bindings.GetKeysForCommand("+use");
 			    String keyname = bindings.NameKeys(useKey1, 0);
                 String prompt = String.Format("[%s]",  keyname);
+            
+                DrawString(
+                    m_smallFont,
+                    prompt,
+                    (-1, 32),
+                    DI_SCREEN_CENTER | DI_TEXT_ALIGN_CENTER);
+                    
+                DrawTexture(
+                    TexMan.CheckForTexture("interact"),
+                    (0, 0),
+                    DI_SCREEN_CENTER | DI_ITEM_CENTER,
+                    0.75,
+                    (3, 3));
+            }
+            else
+            {
+                String prompt = String.Format("[%d]", line.flags);
             
                 DrawString(
                     m_smallFont,
@@ -186,7 +201,6 @@ class YzHud : BaseStatusBar
     }
 }
 
-// Very simple custom linetracer that detects when it hits an actor:
 class PromptDetector : LineTracer
 {
 	override ETraceStatus TraceCallback()
@@ -197,9 +211,18 @@ class PromptDetector : LineTracer
 			case TRACE_HitFloor:
 			case TRACE_HitCeiling:
 			case TRACE_HitWall:
-				return TRACE_Stop;
-				break;
+            {
+                if (results.HitLine)
+                {
+                    if (results.HitLine.activation == SPAC_Use
+                        || results.HitLine.activation == SPAC_UseThrough)
+                    {
+				        return TRACE_Stop;
+                    }
+                }
+            }
 		}
+        
 		return TRACE_Skip;
 	}
 }
