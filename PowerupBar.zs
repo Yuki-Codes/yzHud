@@ -1,6 +1,6 @@
 #include "alignments.zs"
 
-class YzPowerupBar ui
+class PowerupBar ui
 {
     YzHud m_hud;
     HUDFont m_font;

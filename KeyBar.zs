@@ -1,6 +1,6 @@
 #include "alignments.zs"
 
-class YzKeyBar ui
+class KeyBar ui
 {
     YzHud m_hud;
     HUDFont m_font;
