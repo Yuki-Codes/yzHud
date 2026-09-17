@@ -36,6 +36,7 @@ class YzHud : BaseStatusBar
         m_interactPrompt = new("InteractPrompt");
         m_interactPrompt.m_hud = self;
         m_interactPrompt.m_font = m_smallFont;
+        m_interactPrompt.Init();
         
         m_ammo1Interpolator = LinearValueInterpolator.Create(0, 3);
         m_ammo2Interpolator = LinearValueInterpolator.Create(0, 3);
@@ -113,6 +114,8 @@ class YzHud : BaseStatusBar
     override void Tick()
     {
         super.Tick();
+        
+        m_interactPrompt.Tick(cPlayer);
         
         // Update ammo interpolators
         Weapon currentWeapon = cPlayer.readyWeapon;

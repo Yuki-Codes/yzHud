@@ -6,8 +6,41 @@ class InteractPrompt ui
     HUDFont m_font;
     
     private PromptDetector m_tracer;
+    private String m_promptText;
+
+    private float m_alpha;
+    private float m_targetAlpha;
+    
+    void Init()
+    {
+        let [useKey1, useKey2] = bindings.GetKeysForCommand("+use");
+		String keyname = bindings.NameKeys(useKey1, 0);
+        m_promptText = String.Format("[%s]",  keyname);
+    }
         
     void Draw(PlayerInfo player, double ticFrac)
+    {
+        m_alpha += (m_targetAlpha - m_alpha) * (ticFrac * 0.3f);
+        
+        if (m_alpha > 0)
+        {
+            m_hud.DrawString(
+                m_font,
+                m_promptText,
+                (-1, 32),
+                VerticalAlignment.Center | HorizontalAlignment.Center | TextAlignment.Center,
+                alpha: m_alpha);
+                
+            m_hud.DrawTexture(
+                TexMan.CheckForTexture("interact"),
+                (0, 0),
+                VerticalAlignment.Center | HorizontalAlignment.Center | VerticalPivot.Center | HorizontalPivot.Center,
+                m_alpha * 0.75,
+                (2, 2));
+        }
+    }
+    
+    void Tick(PlayerInfo player)
     {
         let mo = player.mo;
         
@@ -30,39 +63,15 @@ class InteractPrompt ui
             wallmask: 0,
             ignore: mo);
         
+        m_targetAlpha = false;
 		if (m_tracer.results.HitType == TRACE_HitWall)
 		{
             let line = m_tracer.results.HitLine;
             if (line.activation == SPAC_Use || line.activation == SPAC_UseThrough)
             {
-                let [useKey1, useKey2] = bindings.GetKeysForCommand("+use");
-			    String keyname = bindings.NameKeys(useKey1, 0);
-                String prompt = String.Format("[%s]",  keyname);
-            
-                m_hud.DrawString(
-                    m_font,
-                    prompt,
-                    (-1, 32),
-                    VerticalAlignment.Center | HorizontalAlignment.Center | TextAlignment.Center);
-                    
-                m_hud.DrawTexture(
-                    TexMan.CheckForTexture("interact"),
-                    (0, 0),
-                    VerticalAlignment.Center | HorizontalAlignment.Center | VerticalPivot.Center | HorizontalPivot.Center,
-                    0.75,
-                    (3, 3));
+                m_targetAlpha = 1.0;
             }
-            /*else
-            {
-                String prompt = String.Format("[%d]", line.flags);
-            
-                m_hud.DrawString(
-                    m_smallFont,
-                    prompt,
-                    (0, 64),
-                    VerticalAlignment.Bottom | HorizontalAlignment.Center | TextAlignment.Center);
-            }*/
-		}
+        }
     }
 }
 
