@@ -13,6 +13,12 @@ class YzHud : BaseStatusBar
     HUDFont m_bigFont;
     HUDFont m_smallFont;
     
+    Weapon m_lastWeapon;
+    LinearValueInterpolator m_ammo1Interpolator;
+    LinearValueInterpolator m_ammo2Interpolator;
+    LinearValueInterpolator m_healthInterpolator;
+    LinearValueInterpolator m_armourInterpolator;
+    
     override void Init()
     {
         super.Init();
@@ -30,6 +36,11 @@ class YzHud : BaseStatusBar
         m_interactPrompt = new("InteractPrompt");
         m_interactPrompt.m_hud = self;
         m_interactPrompt.m_font = m_smallFont;
+        
+        m_ammo1Interpolator = LinearValueInterpolator.Create(0, 3);
+        m_ammo2Interpolator = LinearValueInterpolator.Create(0, 3);
+        m_healthInterpolator = LinearValueInterpolator.Create(0, 3);
+        m_armourInterpolator = LinearValueInterpolator.Create(0, 3);
     }
 
     override void Draw(int state, double ticFrac)
@@ -57,18 +68,17 @@ class YzHud : BaseStatusBar
         // Health
         DrawString(
             m_bigFont,
-            String.Format("%d", CPlayer.health),
+            String.Format("%d", m_healthInterpolator.GetValue()),
             (-18, -20),
             DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_RIGHT,
             translation: Font.CR_Red);
             
         // Armor
-        let armor = BasicArmor(CPlayer.mo.FindInventory('BasicArmor', true));
-        if (armor && armor.amount > 0)
+        if (m_armourInterpolator.GetValue() > 0)
         {
             DrawString(
                 m_smallFont,
-                String.Format("%d", armor.amount),
+                String.Format("%d", m_armourInterpolator.GetValue()),
                 (-18, -30),
                 DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_RIGHT,
                 translation: Font.CR_Red);
@@ -80,7 +90,7 @@ class YzHud : BaseStatusBar
         {
             DrawString(
                 m_bigFont,
-                String.Format("%d", am1amt),
+                String.Format("%d", m_ammo1Interpolator.GetValue()),
                 (18, -20),
                 DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_LEFT,
                 translation: Font.CR_Red);
@@ -89,7 +99,7 @@ class YzHud : BaseStatusBar
         {
             DrawString(
                 m_smallFont,
-                String.Format("%d", am2amt),
+                String.Format("%d", m_ammo2Interpolator.GetValue()),
                 (18, -30),
                 DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_LEFT,
                 translation: Font.CR_Red);
@@ -98,5 +108,39 @@ class YzHud : BaseStatusBar
         m_powerups.Draw(cPlayer, ticFrac, -70, -15);
         m_keys.Draw(cPlayer, ticFrac, 70, -15);
         m_interactPrompt.Draw(cPlayer, ticFrac);
+    }
+    
+    override void Tick()
+    {
+        super.Tick();
+        
+        // Update ammo interpolators
+        Weapon currentWeapon = cPlayer.readyWeapon;
+        let [am1, am2, am1amt, am2amt] = GetCurrentAmmo();
+        
+        if (currentWeapon != m_lastWeapon)
+        {
+            m_ammo1Interpolator = LinearValueInterpolator.Create(am1amt, 3);
+            m_ammo2Interpolator = LinearValueInterpolator.Create(am2amt, 3);
+            m_lastWeapon = currentWeapon;
+        }
+        else
+        {
+            m_ammo1Interpolator.Update(am1amt);
+            m_ammo2Interpolator.Update(am2amt);
+        }
+        
+        // Update helath interpolators
+        m_healthInterpolator.Update(cPlayer.health);
+        
+        let armor = BasicArmor(CPlayer.mo.FindInventory('BasicArmor', true));
+        if (armor == null)
+        {
+            m_armourInterpolator.Update(0);
+        }
+        else
+        {
+            m_armourInterpolator.Update(armor.amount);
+        }
     }
 }
