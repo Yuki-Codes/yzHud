@@ -58,7 +58,7 @@ class InteractPrompt ui
             start,
             mo.cursector,
             dir,
-            mo.radius + mo.userange,
+            mo.userange,
             traceflags: 0,
             wallmask: 0,
             ignore: mo);

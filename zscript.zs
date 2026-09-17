@@ -3,12 +3,14 @@ version "5.00"
 #include "PowerupBar.zs"
 #include "KeyBar.zs"
 #include "InteractPrompt.zs"
+#include "WeaponsList.zs"
 
 class YzHud : BaseStatusBar
 {
     PowerupBar m_powerups;
     KeyBar m_keys;
     InteractPrompt m_interactPrompt;
+    WeaponsList m_weaponsList;
     
     HUDFont m_bigFont;
     HUDFont m_smallFont;
@@ -37,6 +39,10 @@ class YzHud : BaseStatusBar
         m_interactPrompt.m_hud = self;
         m_interactPrompt.m_font = m_smallFont;
         m_interactPrompt.Init();
+        
+        m_weaponsList = new("WeaponsList");
+        m_weaponsList.m_hud = self;
+        m_weaponsList.m_font = m_smallFont;
         
         m_ammo1Interpolator = LinearValueInterpolator.Create(0, 3);
         m_ammo2Interpolator = LinearValueInterpolator.Create(0, 3);
@@ -70,7 +76,7 @@ class YzHud : BaseStatusBar
         DrawString(
             m_bigFont,
             String.Format("%d", m_healthInterpolator.GetValue()),
-            (-18, -20),
+            (-22, -20),
             DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_RIGHT,
             translation: Font.CR_Red);
             
@@ -80,7 +86,7 @@ class YzHud : BaseStatusBar
             DrawString(
                 m_smallFont,
                 String.Format("%d", m_armourInterpolator.GetValue()),
-                (-18, -30),
+                (-22, -30),
                 DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_RIGHT,
                 translation: Font.CR_Red);
         }
@@ -96,7 +102,8 @@ class YzHud : BaseStatusBar
                 DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_LEFT,
                 translation: Font.CR_Red);
         }
-        if (am2 && am2.amount > 0)
+        
+        if (m_ammo2Interpolator.GetValue() > 0)
         {
             DrawString(
                 m_smallFont,
@@ -106,9 +113,10 @@ class YzHud : BaseStatusBar
                 translation: Font.CR_Red);
         }
         
-        m_powerups.Draw(cPlayer, ticFrac, -70, -15);
-        m_keys.Draw(cPlayer, ticFrac, 70, -15);
+        m_powerups.Draw(cPlayer, ticFrac, -75, -10);
+        m_keys.Draw(cPlayer, ticFrac, 75, -10);
         m_interactPrompt.Draw(cPlayer, ticFrac);
+        m_weaponsList.Draw(cPlayer, ticFrac);
     }
     
     override void Tick()
@@ -116,6 +124,7 @@ class YzHud : BaseStatusBar
         super.Tick();
         
         m_interactPrompt.Tick(cPlayer);
+        m_weaponsList.Tick(cPlayer);
         
         // Update ammo interpolators
         Weapon currentWeapon = cPlayer.readyWeapon;

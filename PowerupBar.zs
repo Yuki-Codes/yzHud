@@ -44,7 +44,7 @@ class PowerupBar ui
                             String.Format("%d", secondsLeft),
                             (xPos, yPos + 1),
                             VerticalAlignment.Bottom | HorizontalAlignment.Center | TextAlignment.Left,
-                        translation: Font.CR_WHITE);
+                            translation: Font.CR_WHITE);
                             
                         xPos -= 25;
                     }
