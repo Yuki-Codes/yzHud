@@ -15,7 +15,7 @@ class WeaponsList : UiAddOn
         m_isOpen = false;
         m_previewWeaponNumber = 0;
         m_selectionScrollOffset = new("Interpolator");
-        m_selectionScrollOffset.Speed = 2.0f;
+        m_selectionScrollOffset.Speed = 3.0f;
         
         // Create all slots
         for (int i = 0; i <= 10; i++)
@@ -83,6 +83,9 @@ class WeaponsList : UiAddOn
         {
             if (parts[1] == "SelectWeapon")
             {
+                if (players[consolePlayer].ReadyWeapon.GetClassName() == parts[2])
+                    return;
+                    
                 Weapon targetWeapon = Weapon(players[consolePlayer].mo.findInventory(parts[2]));
                 players[consolePlayer].pendingWeapon = targetWeapon;
             }
@@ -232,13 +235,13 @@ class WeaponInfo
         m_weaponBoxTextureId = TexMan.CheckForTexture("wpnbox");
         
         m_offset = new ("Interpolator");
-        m_offset.Speed = 2.0f;
+        m_offset.Speed = 3.0f;
         m_boxAlpha = new ("Interpolator");
-        m_boxAlpha.Speed = 2.0f;
+        m_boxAlpha.Speed = 3.0f;
         m_iconAlpha = new ("Interpolator");
-        m_iconAlpha.Speed = 2.0f;
+        m_iconAlpha.Speed = 3.0f;
         m_textAlpha = new ("Interpolator");
-        m_textAlpha.Speed = 2.0f;
+        m_textAlpha.Speed = 3.0f;
     
         self.Name = self.Instance.getTag();
         self.Icon = BaseStatusBar.getInventoryIcon(self.Instance, BaseStatusBar.DI_AltIconFirst);
