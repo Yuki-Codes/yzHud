@@ -3,6 +3,7 @@ version "5.00"
 #include "PowerupBar.zs"
 #include "KeyBar.zs"
 #include "InteractPrompt.zs"
+
 #include "WeaponsList.zs"
 
 class YzHud : BaseStatusBar
@@ -10,7 +11,6 @@ class YzHud : BaseStatusBar
     PowerupBar m_powerups;
     KeyBar m_keys;
     InteractPrompt m_interactPrompt;
-    WeaponsList m_weaponsList;
     
     HUDFont m_bigFont;
     HUDFont m_smallFont;
@@ -39,10 +39,6 @@ class YzHud : BaseStatusBar
         m_interactPrompt.m_hud = self;
         m_interactPrompt.m_font = m_smallFont;
         m_interactPrompt.Init();
-        
-        m_weaponsList = new("WeaponsList");
-        m_weaponsList.m_hud = self;
-        m_weaponsList.m_font = m_smallFont;
         
         m_ammo1Interpolator = LinearValueInterpolator.Create(0, 3);
         m_ammo2Interpolator = LinearValueInterpolator.Create(0, 3);
@@ -116,7 +112,6 @@ class YzHud : BaseStatusBar
         m_powerups.Draw(cPlayer, ticFrac, -75, -10);
         m_keys.Draw(cPlayer, ticFrac, 75, -10);
         m_interactPrompt.Draw(cPlayer, ticFrac);
-        m_weaponsList.Draw(cPlayer, ticFrac);
     }
     
     override void Tick()
@@ -124,7 +119,6 @@ class YzHud : BaseStatusBar
         super.Tick();
         
         m_interactPrompt.Tick(cPlayer);
-        m_weaponsList.Tick(cPlayer);
         
         // Update ammo interpolators
         Weapon currentWeapon = cPlayer.readyWeapon;

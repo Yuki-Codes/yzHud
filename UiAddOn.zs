@@ -1,0 +1,117 @@
+class UiAddOn : StaticEventHandler
+{
+    ui Playerinfo Player;
+    
+    private ui bool m_isInitialized;
+    private ui int m_canvasWidth;
+    private ui int m_canvasHeight;
+    private ui int m_canvasScale;
+    
+    ui virtual void Initialize()
+    {
+    }
+    
+    ui virtual void Draw(float deltaTime)
+    {
+    }
+    
+    override void RenderOverlay(RenderEvent event)
+    {
+        if (!m_isInitialized)
+        {
+            m_isInitialized = true;
+            
+            m_canvasScale = 3;
+            m_canvasWidth = Screen.GetWidth() / m_canvasScale;
+            m_canvasHeight = Screen.GetHeight() / m_canvasScale;
+        
+            self.Initialize();
+        }
+        
+        float deltaTime = event.FracTic / GameTicRate;
+        
+        self.Draw(deltaTime);
+    }
+    
+    ui void DrawTexture(
+        TextureID texture,
+        int x,
+        int y,
+        int width = 0,
+        int height = 0,
+        float alpha = 1.0,
+        Vector2 anchor = (0.0f, 0.0f),
+        float scale = 1.0,
+        int clipHeight = 0)
+    {
+        int textureWidth, textureHeight = TexMan.GetSize(texture);
+        Vector2 size = TexMan.GetScaledSize(texture);
+        
+        if (width > 0 && height == 0)
+        {
+            scale = (width / size.X);
+        }
+        else if (height > 0 && width == 0)
+        {
+            scale = (height / size.Y);
+        }
+        
+        if (width == 0)
+            width = size.x;
+            
+        if (height == 0)
+            height = size.y;
+        
+        if (scale != 1.0)
+        {
+            width *= scale;
+            height *= scale;
+        }
+        
+        int clipTop = 0;
+        int clipBottom = m_canvasHeight;
+        if (clipHeight != 0)
+        {
+            clipTop = (y - (clipHeight * anchor.y));
+            clipBottom = clipTop + clipHeight;
+        }
+        
+        Screen.DrawTexture(
+            texture,
+            false,
+            x,
+            y,
+            DTA_ClipTop, clipTop * m_canvasScale,
+            DTA_ClipBottom, clipBottom * m_canvasScale,
+            DTA_Alpha, alpha,
+            width > 0 ? DTA_DestWidth : DTA_Base, width,
+            height > 0 ? DTA_DestHeight : DTA_Base, height,
+            DTA_HudRules, 1,
+            DTA_KeepRatio, true,
+            DTA_LeftOffsetF, anchor.X * size.X,
+            DTA_TopOffsetF, anchor.Y * size.Y,
+            DTA_VirtualWidth, m_canvasWidth,
+            DTA_VirtualHeight, m_canvasHeight);
+    }
+    
+    ui void DrawText(
+        Font font,
+        String text,
+        int x,
+        int y,
+        int color = Font.CR_WHITE,
+        float alpha = 1.0)
+    {
+        Screen.DrawText(
+            font,
+            color,
+            x,
+            y,
+            text,
+            DTA_Alpha, alpha,
+            DTA_HudRules, 1,
+            DTA_KeepRatio, true,
+            DTA_VirtualWidth, m_canvasWidth,
+            DTA_VirtualHeight, m_canvasHeight);
+    }
+}
