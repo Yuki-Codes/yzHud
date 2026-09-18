@@ -16,10 +16,10 @@ class YzHud : BaseStatusBar
     HUDFont m_smallFont;
     
     Weapon m_lastWeapon;
-    LinearValueInterpolator m_ammo1Interpolator;
-    LinearValueInterpolator m_ammo2Interpolator;
-    LinearValueInterpolator m_healthInterpolator;
-    LinearValueInterpolator m_armourInterpolator;
+    Interpolator m_ammo1Interpolator;
+    Interpolator m_ammo2Interpolator;
+    Interpolator m_healthInterpolator;
+    Interpolator m_armourInterpolator;
     
     override void Init()
     {
@@ -40,15 +40,25 @@ class YzHud : BaseStatusBar
         m_interactPrompt.m_font = m_smallFont;
         m_interactPrompt.Init();
         
-        m_ammo1Interpolator = LinearValueInterpolator.Create(0, 3);
-        m_ammo2Interpolator = LinearValueInterpolator.Create(0, 3);
-        m_healthInterpolator = LinearValueInterpolator.Create(0, 3);
-        m_armourInterpolator = LinearValueInterpolator.Create(0, 3);
+        m_ammo1Interpolator = new("Interpolator");
+        m_ammo1Interpolator.Step = 3;
+        m_ammo2Interpolator = new("Interpolator");
+        m_ammo2Interpolator.Step = 3;
+        m_healthInterpolator = new("Interpolator");
+        m_healthInterpolator.Step = 3;
+        m_armourInterpolator = new("Interpolator");
+        m_armourInterpolator.Step = 3;
     }
 
     override void Draw(int state, double ticFrac)
     {
         super.Draw(state, TicFrac);
+        
+        m_ammo1Interpolator.Update(ticFrac);
+        m_ammo2Interpolator.Update(ticFrac);
+        m_healthInterpolator.Update(ticFrac);
+        m_armourInterpolator.Update(ticFrac);
+        
         if (state != HUD_Fullscreen)
         {
             return;
@@ -71,17 +81,17 @@ class YzHud : BaseStatusBar
         // Health
         DrawString(
             m_bigFont,
-            String.Format("%d", m_healthInterpolator.GetValue()),
+            String.Format("%d", m_healthInterpolator.Current),
             (-22, -20),
             DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_RIGHT,
             translation: Font.CR_Red);
             
         // Armor
-        if (m_armourInterpolator.GetValue() > 0)
+        if (m_armourInterpolator.Current > 0)
         {
             DrawString(
                 m_smallFont,
-                String.Format("%d", m_armourInterpolator.GetValue()),
+                String.Format("%d", m_armourInterpolator.Current),
                 (-22, -30),
                 DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_RIGHT,
                 translation: Font.CR_Red);
@@ -93,17 +103,17 @@ class YzHud : BaseStatusBar
         {
             DrawString(
                 m_bigFont,
-                String.Format("%d", m_ammo1Interpolator.GetValue()),
+                String.Format("%d", m_ammo1Interpolator.Current),
                 (18, -20),
                 DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_LEFT,
                 translation: Font.CR_Red);
         }
         
-        if (m_ammo2Interpolator.GetValue() > 0)
+        if (m_ammo2Interpolator.Current > 0)
         {
             DrawString(
                 m_smallFont,
-                String.Format("%d", m_ammo2Interpolator.GetValue()),
+                String.Format("%d", m_ammo2Interpolator.Current),
                 (18, -30),
                 DI_SCREEN_CENTER_BOTTOM | DI_TEXT_ALIGN_LEFT,
                 translation: Font.CR_Red);
@@ -126,27 +136,27 @@ class YzHud : BaseStatusBar
         
         if (currentWeapon != m_lastWeapon)
         {
-            m_ammo1Interpolator = LinearValueInterpolator.Create(am1amt, 3);
-            m_ammo2Interpolator = LinearValueInterpolator.Create(am2amt, 3);
+            m_ammo1Interpolator.Current = am1amt;
+            m_ammo1Interpolator.Step = 3; // TODO: based on the max ammo
+            m_ammo2Interpolator.Current = am2amt;
+            m_ammo2Interpolator.Step = 3; // TODO: based on the max ammo
             m_lastWeapon = currentWeapon;
         }
-        else
-        {
-            m_ammo1Interpolator.Update(am1amt);
-            m_ammo2Interpolator.Update(am2amt);
-        }
+
+        m_ammo1Interpolator.Target = am1amt;
+        m_ammo2Interpolator.Target = am2amt;
         
         // Update helath interpolators
-        m_healthInterpolator.Update(cPlayer.health);
+        m_healthInterpolator.Target = cPlayer.health;
         
         let armor = BasicArmor(CPlayer.mo.FindInventory('BasicArmor', true));
         if (armor == null)
         {
-            m_armourInterpolator.Update(0);
+            m_armourInterpolator.Target = 0;
         }
         else
         {
-            m_armourInterpolator.Update(armor.amount);
+            m_armourInterpolator.Target = armor.amount;
         }
     }
 }

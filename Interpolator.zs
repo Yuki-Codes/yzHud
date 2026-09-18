@@ -2,31 +2,41 @@ class Interpolator
 {
     float Target;
     float Speed;
+    float Current;
     
-    private float m_current;
+    float Step;
     
     float Update(double ticFrac)
     {
-        return UpdateInternal(ticFrac);
-    }
-    
-    private virtual float UpdateInternal(double ticFrac)
-    {
-        if (self.Speed == 0)
-            self.Speed = 1.0f;
-            
-        float deltaTime = ticFrac / GameTicRate;
-        float delta = (self.Target - self.m_current) * (deltaTime * self.Speed * 10);
-        
-        if (delta < 0.01f && delta > -0.001)
+        if (self.Step != 0)
         {
-            self.m_current = Target;
+            if (self.Current > self.Target)
+            {
+                self.Current = max(self.Target, self.Current - self.Step);
+            }
+            else
+            {
+                self.Current = min(self.Target, self.Current + self.Step);
+            }
         }
         else
         {
-            self.m_current += delta;
+            if (self.Speed == 0)
+                self.Speed = 1.0f;
+                
+            float deltaTime = ticFrac / GameTicRate;
+            float delta = (self.Target - self.Current) * (deltaTime * self.Speed * 10);
+            
+            if (delta < 0.01f && delta > -0.001)
+            {
+                self.Current = Target;
+            }
+            else
+            {
+                self.Current += delta;
+            }
         }
         
-        return m_current;
+        return Current;
     }
 }
