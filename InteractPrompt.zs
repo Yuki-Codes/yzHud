@@ -8,11 +8,12 @@ class InteractPrompt ui
     private PromptDetector m_tracer;
     private String m_promptText;
 
-    private float m_alpha;
-    private float m_targetAlpha;
+    private Interpolator m_alpha;
     
     void Init()
     {
+        m_alpha = new("Interpolator");
+        
         let [useKey1, useKey2] = bindings.GetKeysForCommand("+use");
 		String keyname = bindings.NameKeys(useKey1, 0);
         m_promptText = String.Format("[%s]",  keyname);
@@ -20,22 +21,22 @@ class InteractPrompt ui
         
     void Draw(PlayerInfo player, double ticFrac)
     {
-        m_alpha += (m_targetAlpha - m_alpha) * (ticFrac * 0.3f);
+        float alpha = m_alpha.Update(ticFrac);
         
-        if (m_alpha > 0)
+        if (alpha > 0)
         {
             m_hud.DrawString(
                 m_font,
                 m_promptText,
                 (-1, 32),
                 VerticalAlignment.Center | HorizontalAlignment.Center | TextAlignment.Center,
-                alpha: m_alpha);
+                alpha: alpha);
                 
             m_hud.DrawTexture(
                 TexMan.CheckForTexture("interact"),
                 (0, 0),
                 VerticalAlignment.Center | HorizontalAlignment.Center | VerticalPivot.Center | HorizontalPivot.Center,
-                m_alpha * 0.75,
+                alpha * 0.75,
                 (2, 2));
         }
     }
@@ -63,13 +64,13 @@ class InteractPrompt ui
             wallmask: 0,
             ignore: mo);
         
-        m_targetAlpha = false;
+        m_alpha.Target = 0;
 		if (m_tracer.results.HitType == TRACE_HitWall)
 		{
             let line = m_tracer.results.HitLine;
             if (line.activation == SPAC_Use || line.activation == SPAC_UseThrough)
             {
-                m_targetAlpha = 1.0;
+                m_alpha.Target = 1.0;
             }
         }
     }

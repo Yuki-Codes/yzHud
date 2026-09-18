@@ -28,9 +28,7 @@ class UiAddOn : StaticEventHandler
             self.Initialize();
         }
         
-        float deltaTime = event.FracTic / GameTicRate;
-        
-        self.Draw(deltaTime);
+        self.Draw(event.FracTic);
     }
     
     ui int GetWidth()

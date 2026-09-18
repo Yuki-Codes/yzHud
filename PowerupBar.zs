@@ -65,7 +65,8 @@ class PowerupBar ui
     
     private TextureID GetPowerupIcon(Powerup powerup)
     {
-        if (powerup.GetClass() == "PowerIronFeet")
+        if (powerup.GetClass() == "PowerIronFeet"
+            || powerup.GetClassName() == "PowerDimIronFeet")
             return TexMan.CheckForTexture("rad");
             
         if (powerup.GetClass() == "PowerInvisibility")

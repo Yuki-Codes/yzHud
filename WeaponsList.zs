@@ -132,7 +132,7 @@ class WeaponsList : UiAddOn
     }
     
     // Scope: UI
-    override void Draw(float deltaTime)
+    override void Draw(double ticFrac)
     {
         int xPos = (self.GetWidth() / 2) + 200;
         int yPos = (self.GetHeight() / 2);
@@ -168,7 +168,7 @@ class WeaponsList : UiAddOn
         m_selectionScrollOffset.Target = m_previewWeaponNumber * boxHeight;
         
         //yPos -= (totalWeapons * boxHeight) / 2;
-        yPos -= m_selectionScrollOffset.Update(deltaTime);
+        yPos -= m_selectionScrollOffset.Update(ticFrac);
         yPos += 50;
         
         for (int i = 0; i < 10; i++)
@@ -190,7 +190,7 @@ class WeaponsList : UiAddOn
                     m_previewWeaponNumber == weaponNumber,
                     !m_isOpen,
                     m_selectingWeaponNumber == weaponNumber,
-                    deltaTime,
+                    ticFrac,
                     xPos,
                     yPos,
                     boxHeight);
@@ -261,7 +261,7 @@ class WeaponInfo
         bool isPreview,
         bool isHidden,
         bool isSelected,
-        float deltaTime,
+        double ticFrac,
         int xPos,
         int yPos,
         int height)
@@ -284,7 +284,7 @@ class WeaponInfo
             self.m_textAlpha.Target = 0;
         }
         
-        int offset = self.m_offset.Update(deltaTime);
+        int offset = self.m_offset.Update(ticFrac);
         
         let framecolor = Color(255, 80, 80, 80);
         list.DrawTexture(
@@ -293,13 +293,13 @@ class WeaponInfo
             yPos,
             width: boxWidth,
             height: height,
-            alpha: self.m_boxAlpha.Update(deltaTime));
+            alpha: self.m_boxAlpha.Update(ticFrac));
             
         list.DrawTexture(
             self.Icon,
             xPos + offset + 3,
             yPos + (height / 2),
-            alpha: self.m_iconAlpha.Update(deltaTime),
+            alpha: self.m_iconAlpha.Update(ticFrac),
             anchor: (0.0, 0.5),
             clipHeight: height - 2);
             
@@ -309,6 +309,6 @@ class WeaponInfo
             xPos + offset + 3,
             yPos + height - m_font.GetHeight(),
             color: Font.CR_Red,
-            alpha: self.m_textAlpha.Update(deltaTime));
+            alpha: self.m_textAlpha.Update(ticFrac));
     }
 }

@@ -5,16 +5,17 @@ class Interpolator
     
     private float m_current;
     
-    float Update(float deltaTime)
+    float Update(double ticFrac)
     {
-        return UpdateInternal(deltaTime);
+        return UpdateInternal(ticFrac);
     }
     
-    private virtual float UpdateInternal(float deltaTime)
+    private virtual float UpdateInternal(double ticFrac)
     {
         if (self.Speed == 0)
             self.Speed = 1.0f;
-        
+            
+        float deltaTime = ticFrac / GameTicRate;
         float delta = (self.Target - self.m_current) * (deltaTime * self.Speed * 10);
         
         if (delta < 0.01f && delta > -0.001)
