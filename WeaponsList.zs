@@ -96,13 +96,16 @@ class WeaponsList : UiAddOn
     // Scope: UI
     override void Draw(float deltaTime)
     {
-        int xPos = 300;
-        int yPos = 0;
+        int xPos = (self.GetWidth() / 2) + 200;
+        int yPos = (self.GetHeight() / 2);
         
         PlayerInfo player = players[consolePlayer];
         Weapon currentWeapon = player.ReadyWeapon;
         
+        int boxHeight = 32;
+        
         int weaponNumber = 0;
+        int totalWeapons = 0;
         for (int i = 0; i < 10; i++)
         {
             WeaponSlot slot = m_weaponSlots[i];
@@ -111,19 +114,36 @@ class WeaponsList : UiAddOn
             {
                 WeaponInfo info = slot.WeaponTypes[i];
                 
-                int drawHeight = info.Draw(
+                if (info.IsValid(player))
+                {
+                    totalWeapons++;
+                }
+            }
+        }
+        
+        yPos -= (totalWeapons * boxHeight) / 2;
+        
+        for (int i = 0; i < 10; i++)
+        {
+            WeaponSlot slot = m_weaponSlots[i];
+            
+            for (int i = 0; i < slot.WeaponTypes.Size(); i++)
+            {
+                WeaponInfo info = slot.WeaponTypes[i];
+                
+                if (!info.IsValid(player))
+                    continue;
+                
+                info.Draw(
                     self,
-                    player,
                     weaponNumber == m_previewWeaponNumber,
                     deltaTime,
                     xPos,
-                    yPos);
-                
-                if (drawHeight > 0)
-                {
-                    yPos += drawHeight + 5;
-                    weaponNumber++;
-                }
+                    yPos,
+                    boxHeight);
+
+                yPos += boxHeight + 2;
+                weaponNumber++;
             }
         }
     }
@@ -166,23 +186,31 @@ class WeaponInfo
         self.Icon = BaseStatusBar.getInventoryIcon(weapon, BaseStatusBar.DI_AltIconFirst);
     }
     
-    ui int Draw(
-        WeaponsList list,
-        PlayerInfo player,
-        bool isPreview,
-        float deltaTime,
-        int xPos,
-        int yPos)
+    ui bool IsValid(PlayerInfo player)
     {
         Weapon weapon = Weapon(player.mo.findInventory(self.Type.GetClassName()));
         if (weapon == null)
-            return 0;
+            return false;
             
         if(!m_offset)
             Init(weapon);
+            
+        return true;
+    }
+    
+    ui void Draw(
+        WeaponsList list,
+        bool isPreview,
+        float deltaTime,
+        int xPos,
+        int yPos,
+        int height)
+    {   
+        if (!m_offset)
+            return;
         
         int boxWidth = 128;
-        int boxHeight = 32;
+        
         self.m_offset.Target = isPreview ? 0 : 25;
         self.m_boxAlpha.Target = isPreview? 1.0 : 0.25;
         self.m_iconAlpha.Target = isPreview? 1.0 : 0.25;
@@ -196,25 +224,23 @@ class WeaponInfo
             xPos + offset,
             yPos,
             width: boxWidth,
-            height: boxHeight,
+            height: height,
             alpha: self.m_boxAlpha.Update(deltaTime));
             
         list.DrawTexture(
             self.Icon,
             xPos + offset + 3,
-            yPos + (boxHeight / 2),
+            yPos + (height / 2),
             alpha: self.m_iconAlpha.Update(deltaTime),
             anchor: (0.0, 0.5),
-            clipHeight: boxHeight - 2);
+            clipHeight: height - 2);
             
         list.DrawText(
             m_font,
             self.Name,
             xPos + offset + 3,
-            yPos + boxHeight - m_font.GetHeight(),
+            yPos + height - m_font.GetHeight(),
             color: Font.CR_Red,
             alpha: self.m_textAlpha.Update(deltaTime));
-            
-        return boxHeight;
     }
 }

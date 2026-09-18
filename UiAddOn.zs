@@ -33,6 +33,16 @@ class UiAddOn : StaticEventHandler
         self.Draw(deltaTime);
     }
     
+    ui int GetWidth()
+    {
+        return m_canvasWidth;
+    }
+    
+    ui int GetHeight()
+    {
+        return m_canvasHeight;
+    }
+    
     ui void DrawTexture(
         TextureID texture,
         int x,
