@@ -3,14 +3,19 @@
 
 class WeaponsList : UiAddOn
 {
-    ui Array<WeaponSlot> m_weaponSlots;
-    
-    ui int m_previewWeaponNumber;
+    private ui Array<WeaponSlot> m_weaponSlots;
+    private ui int m_previewWeaponNumber;
+    private ui String m_previewWeaponType;
+    private ui int m_selectingWeaponNumber;
+    private ui Interpolator m_selectionScrollOffset;
+    private ui bool m_isOpen;
     
     override void Initialize()
     {
-        
-        m_previewWeaponNumber = -1;
+        m_isOpen = false;
+        m_previewWeaponNumber = 0;
+        m_selectionScrollOffset = new("Interpolator");
+        m_selectionScrollOffset.Speed = 2.0f;
         
         // Create all slots
         for (int i = 0; i <= 10; i++)
@@ -63,7 +68,26 @@ class WeaponsList : UiAddOn
                 m_weaponSlots[slot].WeaponTypes.Push(newInfo);
             }
         }
-    }    
+    }
+    
+    // Scope: Play
+    override void NetworkProcess(ConsoleEvent event)
+    {
+        if (players[consolePlayer].mo == null)
+            return;
+        
+        Array<string> parts;
+        event.Name.split(parts, ":");
+            
+        if (parts[0] == "yzHud")
+        {
+            if (parts[1] == "SelectWeapon")
+            {
+                Weapon targetWeapon = Weapon(players[consolePlayer].mo.findInventory(parts[2]));
+                players[consolePlayer].pendingWeapon = targetWeapon;
+            }
+        }
+    }
     
     // Scope: UI
     override bool InputProcess(InputEvent event)
@@ -73,21 +97,35 @@ class WeaponsList : UiAddOn
 
         if (bindings.GetBinding(event.KeyScan) ~== "weapnext")
         {
+            m_selectingWeaponNumber = -1;
             m_previewWeaponNumber++;
+            m_isOpen = true;
             return true;
         }
         else if (bindings.GetBinding(event.KeyScan) ~== "weapprev")
         {
+            m_selectingWeaponNumber = -1;
             m_previewWeaponNumber--;
+            m_isOpen = true;
             return true;
         }
-        else if (bindings.GetBinding(event.KeyScan) ~== "+attack")
+        
+        if (m_isOpen)
         {
-            return true;
-        }
-        else if (bindings.GetBinding(event.KeyScan) ~== "+altAttack")
-        {
-            return true;
+            if (bindings.GetBinding(event.KeyScan) ~== "+attack")
+            {
+                m_selectingWeaponNumber = m_previewWeaponNumber;
+                m_isOpen = false;
+                
+                EventHandler.SendNetworkEvent(string.format("yzHud:SelectWeapon:%s", m_previewWeaponType));
+                
+                return true;
+            }
+            else if (bindings.GetBinding(event.KeyScan) ~== "+altAttack")
+            {
+                m_isOpen = false;
+                return true;
+            }
         }
         
         return false;
@@ -121,7 +159,17 @@ class WeaponsList : UiAddOn
             }
         }
         
-        yPos -= (totalWeapons * boxHeight) / 2;
+        if (m_previewWeaponNumber < 0)
+            m_previewWeaponNumber = totalWeapons - 1;
+            
+        if (m_previewWeaponNumber >= totalWeapons)
+            m_previewWeaponNumber = 0;
+        
+        m_selectionScrollOffset.Target = m_previewWeaponNumber * boxHeight;
+        
+        //yPos -= (totalWeapons * boxHeight) / 2;
+        yPos -= m_selectionScrollOffset.Update(deltaTime);
+        yPos += 50;
         
         for (int i = 0; i < 10; i++)
         {
@@ -131,12 +179,17 @@ class WeaponsList : UiAddOn
             {
                 WeaponInfo info = slot.WeaponTypes[i];
                 
-                if (!info.IsValid(player))
+                if (!info.Instance)
                     continue;
+                    
+                if (m_previewWeaponNumber == weaponNumber)
+                    m_previewWeaponType = info.Type.GetClassName();
                 
                 info.Draw(
                     self,
-                    weaponNumber == m_previewWeaponNumber,
+                    m_previewWeaponNumber == weaponNumber,
+                    !m_isOpen,
+                    m_selectingWeaponNumber == weaponNumber,
                     deltaTime,
                     xPos,
                     yPos,
@@ -163,6 +216,7 @@ class WeaponInfo
     
     String Name;
     TextureID Icon;
+    Weapon Instance;
     
     private ui TextureId m_weaponBoxTextureId;
     private ui Font m_font;
@@ -172,28 +226,32 @@ class WeaponInfo
     private ui Interpolator m_iconAlpha;
     private ui Interpolator m_textAlpha;
     
-    ui void Init(Weapon weapon)
+    ui void Init()
     {
         m_font = Font.FindFont('SmallFont');
         m_weaponBoxTextureId = TexMan.CheckForTexture("wpnbox");
         
         m_offset = new ("Interpolator");
+        m_offset.Speed = 2.0f;
         m_boxAlpha = new ("Interpolator");
+        m_boxAlpha.Speed = 2.0f;
         m_iconAlpha = new ("Interpolator");
+        m_iconAlpha.Speed = 2.0f;
         m_textAlpha = new ("Interpolator");
+        m_textAlpha.Speed = 2.0f;
     
-        self.Name = weapon.getTag();
-        self.Icon = BaseStatusBar.getInventoryIcon(weapon, BaseStatusBar.DI_AltIconFirst);
+        self.Name = self.Instance.getTag();
+        self.Icon = BaseStatusBar.getInventoryIcon(self.Instance, BaseStatusBar.DI_AltIconFirst);
     }
     
     ui bool IsValid(PlayerInfo player)
     {
-        Weapon weapon = Weapon(player.mo.findInventory(self.Type.GetClassName()));
-        if (weapon == null)
+        self.Instance = Weapon(player.mo.findInventory(self.Type.GetClassName()));
+        if (self.Instance == null)
             return false;
             
-        if(!m_offset)
-            Init(weapon);
+        if(!m_font)
+            Init();
             
         return true;
     }
@@ -201,6 +259,8 @@ class WeaponInfo
     ui void Draw(
         WeaponsList list,
         bool isPreview,
+        bool isHidden,
+        bool isSelected,
         float deltaTime,
         int xPos,
         int yPos,
@@ -215,6 +275,14 @@ class WeaponInfo
         self.m_boxAlpha.Target = isPreview? 1.0 : 0.25;
         self.m_iconAlpha.Target = isPreview? 1.0 : 0.25;
         self.m_textAlpha.Target = isPreview ? 1.0 : 0.0;
+        
+        if (isHidden)
+        {
+            self.m_offset.Target = isSelected ? 0 : 50;
+            self.m_boxAlpha.Target = 0;
+            self.m_iconAlpha.Target = 0;
+            self.m_textAlpha.Target = 0;
+        }
         
         int offset = self.m_offset.Update(deltaTime);
         
