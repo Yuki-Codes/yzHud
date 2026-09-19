@@ -112,6 +112,17 @@ class WeaponsList : UiAddOn
             m_isOpen = true;
             return true;
         }
+        else
+        {
+            for (int i = 0; i <= 11; ++i)
+            {
+                if (bindings.GetBinding(event.KeyScan) ~== string.format("slot %d", i))
+                {
+                    self.PreviewWeaponSlot(i);
+                    return true;
+                }
+            }
+        }
         
         if (m_isOpen)
         {
@@ -134,6 +145,53 @@ class WeaponsList : UiAddOn
         return false;
     }
     
+    private ui void PreviewWeaponSlot(int slotIndex)
+    {
+        // Get all the valid weapons in this slot
+        WeaponSlot slot = m_weaponSlots[slotIndex];
+        Array<WeaponInfo> validWeapons;
+        for (int i = 0; i < slot.WeaponTypes.Size(); i++)
+        {
+            WeaponInfo info = slot.WeaponTypes[i];
+            if (info.IsValid(players[consolePlayer]))
+            {
+                validWeapons.push(info);
+            }
+        }
+        
+        // Nothing in this slot
+        if (validWeapons.Size() <= 0)
+            return;
+        
+        // Find the currently previewed entry
+        int previewIndex = -1;
+        for (int i = 0; i < validWeapons.Size(); i++)
+        {
+            WeaponInfo info = validWeapons[i];
+            if (info.WeaponNumber == m_previewWeaponNumber)
+            {
+                previewIndex = i;
+                break;
+            }
+        }
+        
+        if (previewIndex == -1)
+        {
+            m_previewWeaponNumber = validWeapons[0].WeaponNumber;
+        }
+        else
+        {
+            previewIndex++;
+            
+            if (previewIndex >= validWeapons.Size())
+                previewIndex = 0;
+            
+            m_previewWeaponNumber = validWeapons[previewIndex].WeaponNumber;
+        }
+        
+        m_isOpen = true;
+    }
+    
     // Scope: UI
     override void Draw(double ticFrac)
     {
@@ -151,12 +209,13 @@ class WeaponsList : UiAddOn
         {
             WeaponSlot slot = m_weaponSlots[i];
             
-            for (int i = 0; i < slot.WeaponTypes.Size(); i++)
+            for (int j = 0; j < slot.WeaponTypes.Size(); j++)
             {
-                WeaponInfo info = slot.WeaponTypes[i];
+                WeaponInfo info = slot.WeaponTypes[j];
                 
                 if (info.IsValid(player))
                 {
+                    info.WeaponNumber = totalWeapons;
                     totalWeapons++;
                 }
             }
@@ -216,10 +275,10 @@ class WeaponInfo
     class<Weapon> Type;
     int Slot;
     int Priority;
-    
     String Name;
     TextureID Icon;
     Weapon Instance;
+    int WeaponNumber;
     
     private ui TextureId m_weaponBoxTextureId;
     private ui Font m_font;
@@ -249,6 +308,9 @@ class WeaponInfo
     
     ui bool IsValid(PlayerInfo player)
     {
+        if (player == null || player.mo == null || self.Type == null)
+            return false;
+        
         self.Instance = Weapon(player.mo.findInventory(self.Type.GetClassName()));
         if (self.Instance == null)
             return false;
@@ -308,7 +370,7 @@ class WeaponInfo
             
         list.DrawText(
             m_font,
-            self.Name,
+            String.Format("%d: %s", self.Slot, self.Name),
             xPos + offset + 3,
             yPos + height - m_font.GetHeight(),
             color: Font.CR_Red,
