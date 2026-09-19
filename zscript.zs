@@ -5,6 +5,7 @@ version "5.00"
 #include "InteractPrompt.zs"
 
 #include "WeaponsList.zs"
+#include "BossBar.zs"
 
 class YzHud : BaseStatusBar
 {

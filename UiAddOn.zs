@@ -108,8 +108,11 @@ class UiAddOn : StaticEventHandler
         int x,
         int y,
         int color = Font.CR_WHITE,
-        float alpha = 1.0)
+        float alpha = 1.0,
+        float align = 0.0f)
     {
+        x -= font.stringWidth(text) * align;
+        
         Screen.DrawText(
             font,
             color,
