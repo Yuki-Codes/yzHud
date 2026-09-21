@@ -113,6 +113,7 @@ class BossEntry
             if (m_actor != null
                 && m_actor.target
                 && m_actor.target.player
+                && m_actor.health > 0
 
                 // CheckSightOrRange is backwards! false means _in sight and in range_
                 && !m_actor.CheckSightOrRange(100))
