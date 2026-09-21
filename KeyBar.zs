@@ -35,7 +35,7 @@ class KeyBar : UiAddOn
 
         for (int i = 0; i < m_keys.Size(); i++)
         {
-            m_keys[i].Tick(self.Player);
+            m_keys[i].Tick(self);
         }
     }
 }
@@ -71,9 +71,9 @@ class KeyEntry ui
         m_alpha.Target = 1.0f;
     }
 
-    void Tick(PlayerInfo player)
+    void Tick(UiAddOn uiAddOn)
     {
-        Key key = Key(player.mo.FindInventory(m_keyClass));
+        Key key = Key(uiAddOn.Player.mo.FindInventory(m_keyClass));
         if (key != null && m_key == null)
         {
             m_key = key;
@@ -82,6 +82,10 @@ class KeyEntry ui
         else if (key == null && m_key != null)
         {
             m_key == null;
+            m_xPos.Current = uiAddOn.GetWidth() / 2;
+            m_yPos.Current = uiAddOn.GetHeight() / 2;
+            m_scale.Current = 4.0;
+            m_alpha.Current = 0.0f;
         }
     }
 

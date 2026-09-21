@@ -2,16 +2,16 @@
 
 class InteractPrompt : UiAddOn
 {
-    Font m_font;
-
+    private ui Font m_font;
     private ui PromptDetector m_tracer;
     private ui String m_promptText;
-
     private ui Interpolator m_alpha;
 
     override void Initialize()
     {
+        m_font = Font.FindFont('SmallFont');
         m_alpha = new("Interpolator");
+
 
         let [useKey1, useKey2] = bindings.GetKeysForCommand("+use");
 		String keyname = bindings.NameKeys(useKey1, 0);
@@ -28,15 +28,17 @@ class InteractPrompt : UiAddOn
             self.DrawText(
                 m_font,
                 m_promptText,
-                -1,
-                32,
-                alpha: alpha);
+                self.GetWidth() / 2,
+                (self.GetHeight() / 2) + 32,
+                alpha: alpha,
+                align: 0.5);
 
-            self.DrawTexture(
+            /*self.DrawTexture(
                 TexMan.CheckForTexture("interact"),
-                0,
-                0,
-                alpha * 0.75);
+                self.GetWidth() / 2,
+                (self.GetHeight() / 2) + 16,
+                alpha: alpha * 0.75,
+                scale: 1.0);*/
         }
     }
 
