@@ -1,6 +1,6 @@
 class UiAddOn : StaticEventHandler
 {
-    ui PlayerInfo Player;
+    PlayerInfo Player;
 
     private ui bool m_isInitialized;
     private ui int m_canvasWidth;
@@ -22,6 +22,18 @@ class UiAddOn : StaticEventHandler
 
     override void RenderOverlay(RenderEvent event)
     {
+        float drawTime = MSTimeF();
+        float deltaTime = (drawTime - m_prevDrawTime) / 1000;
+        m_prevDrawTime = drawTime;
+
+        if (!m_isInitialized)
+            return;
+
+        self.Draw(deltaTime);
+    }
+
+    override void UiTick()
+    {
         if (!m_isInitialized)
         {
             m_isInitialized = true;
@@ -33,16 +45,12 @@ class UiAddOn : StaticEventHandler
             self.Initialize();
         }
 
-        float drawTime = MSTimeF();
-        float deltaTime = (drawTime - m_prevDrawTime) / 1000;
-        m_prevDrawTime = drawTime;
-
-        self.Draw(deltaTime);
+        self.Tick();
     }
 
-    override void UiTick()
+    override void WorldTick()
     {
-        self.Tick();
+        self.Player = players[consolePlayer];
     }
 
     ui int GetWidth()

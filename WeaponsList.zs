@@ -25,8 +25,6 @@ class WeaponsList : UiAddOn
             m_weaponSlots.Push(slot);
         }
 
-        PlayerInfo player = players[consolePlayer];
-
         // Thanks to Gearbox.
         // Find every weapon and sort the slots
         foreach (actorClass : AllActorClasses)
@@ -39,7 +37,7 @@ class WeaponsList : UiAddOn
             bool located;
             int slot;
             int priority;
-            [located, slot, priority] = player.weapons.LocateWeapon(weaponType);
+            [located, slot, priority] = self.Player.weapons.LocateWeapon(weaponType);
 
             if (!located)
                 continue;
@@ -73,7 +71,7 @@ class WeaponsList : UiAddOn
     // Scope: Play
     override void NetworkProcess(ConsoleEvent event)
     {
-        if (players[consolePlayer].mo == null)
+        if (self.Player.mo == null)
             return;
 
         Array<string> parts;
@@ -83,11 +81,11 @@ class WeaponsList : UiAddOn
         {
             if (parts[1] == "SelectWeapon")
             {
-                if (players[consolePlayer].ReadyWeapon.GetClassName() == parts[2])
+                if (self.Player.ReadyWeapon.GetClassName() == parts[2])
                     return;
 
-                Weapon targetWeapon = Weapon(players[consolePlayer].mo.findInventory(parts[2]));
-                players[consolePlayer].pendingWeapon = targetWeapon;
+                Weapon targetWeapon = Weapon(self.Player.mo.findInventory(parts[2]));
+                self.Player.pendingWeapon = targetWeapon;
             }
         }
     }
@@ -153,7 +151,7 @@ class WeaponsList : UiAddOn
         for (int i = 0; i < slot.WeaponTypes.Size(); i++)
         {
             WeaponInfo info = slot.WeaponTypes[i];
-            if (info.IsValid(players[consolePlayer]))
+            if (info.IsValid(self.Player))
             {
                 validWeapons.push(info);
             }
@@ -198,8 +196,7 @@ class WeaponsList : UiAddOn
         int xPos = (self.GetWidth() / 2) + 200;
         int yPos = (self.GetHeight() / 2);
 
-        PlayerInfo player = players[consolePlayer];
-        Weapon currentWeapon = player.ReadyWeapon;
+        Weapon currentWeapon = self.Player.ReadyWeapon;
 
         int boxHeight = 32;
 
@@ -351,7 +348,7 @@ class WeaponInfo
 
         int offset = self.m_offset.Update(deltaTime);
 
-        let framecolor = Color(255, 80, 80, 80);
+        let frameColor = Color(255, 80, 80, 80);
         list.DrawTexture(
             m_weaponBoxTextureId,
             xPos + offset,

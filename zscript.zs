@@ -10,7 +10,6 @@ version "5.00"
 class YzHud : BaseStatusBar
 {
     PowerupBar m_powerups;
-    KeyBar m_keys;
 
     HUDFont m_bigFont;
     HUDFont m_smallFont;
@@ -30,10 +29,6 @@ class YzHud : BaseStatusBar
         m_powerups = new("PowerupBar");
         m_powerups.m_hud = self;
         m_powerups.m_font = m_smallFont;
-
-        m_keys = new("KeyBar");
-        m_keys.m_hud = self;
-        m_keys.m_font = m_smallFont;
 
         m_ammo1Interpolator = new("Interpolator");
         m_ammo1Interpolator.Step = 3;
@@ -111,7 +106,6 @@ class YzHud : BaseStatusBar
         }
 
         m_powerups.Draw(cPlayer, ticFrac, -75, -10);
-        m_keys.Draw(cPlayer, ticFrac, 75, -10);
     }
 
     override void Tick()

@@ -42,6 +42,9 @@ class InteractPrompt : UiAddOn
 
     override void Tick()
     {
+        if (player == null)
+            return;
+
         let mo = player.mo;
 
 		// Do nothing if this player is a voodoo doll, or is dead:
@@ -52,15 +55,15 @@ class InteractPrompt : UiAddOn
             m_tracer = new('PromptDetector');
 
 		// Fire from player's screen center:
-		Vector3 start = (mo.pos.xy, player.viewz);
+		Vector3 start = (mo.pos.xy, self.Player.ViewZ);
 		Vector3 dir = (Actor.AngleToVector(mo.angle, cos(mo.pitch)), -sin(mo.pitch));
 		m_tracer.Trace(
             start,
-            mo.cursector,
+            mo.curSector,
             dir,
-            mo.userange,
-            traceflags: 0,
-            wallmask: 0,
+            mo.useRange,
+            traceFlags: 0,
+            wallMask: 0,
             ignore: mo);
 
         m_alpha.Target = 0;

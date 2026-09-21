@@ -1,6 +1,8 @@
-Gameinfo
+GameInfo
 {
     StatusBarClass = "YzHud"
     AddEventHandlers = "WeaponsList"
     AddEventHandlers = "BossBar"
+    AddEventHandlers = "InteractPrompt"
+    AddEventHandlers = "KeyBar"
 }
