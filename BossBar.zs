@@ -71,6 +71,10 @@ class BossEntry
     private ui TextureId m_barFillTextureId;
     private ui Font m_font;
 
+    private ui Interpolator m_value;
+    private ui Interpolator m_width;
+    private ui Interpolator m_textAlpha;
+
     play void InitializeWorld(Actor actor)
     {
         self.m_actor = actor;
@@ -83,6 +87,15 @@ class BossEntry
         m_barFgTextureId = TexMan.CheckForTexture("barfg");
         m_barFillTextureId = TexMan.CheckForTexture("barfill");
         m_font = Font.FindFont('SmallFont');
+
+        m_value = new("Interpolator");
+
+        m_width = new("Interpolator");
+        m_width.Target = 256;
+        m_width.Speed = 0.5f;
+
+        m_textAlpha = new("Interpolator");
+        m_textAlpha.Target = 1.0f;
     }
 
     play void WorldTick()
@@ -123,39 +136,54 @@ class BossEntry
         if (!m_isActive)
             return;
 
-        double healthRatio = m_actor.health / Double(m_actor.SpawnHealth());
-		healthRatio = clamp(healthRatio, 0, 1);
+        float barWidth = m_width.Update(deltaTime);
+
+        bool isOpened = barWidth >= m_width.Target - 1;
+
+        double healthRatio = 0;
+        if (isOpened)
+        {
+            healthRatio = m_actor.health / Double(m_actor.SpawnHealth());
+            healthRatio = clamp(healthRatio, 0, 1);
+            m_value.Target = healthRatio;
+
+            healthRatio = m_value.Update(deltaTime);
+        }
 
         addOn.DrawTexture(
             m_barBgTextureId,
-            (addOn.GetWidth() / 2) - 128,
+            (addOn.GetWidth() / 2) -  (barWidth / 2),
             y,
-            width: 256,
+            width: barWidth,
             height: 16,
             alpha: 1.0);
 
         addOn.DrawTexture(
             m_barFillTextureId,
-            (addOn.GetWidth() / 2) - 128 + 2,
+            (addOn.GetWidth() / 2) -  (barWidth / 2) + 2,
             y + 1,
-            width: (healthRatio * 252),
+            width: (healthRatio * (barWidth - 4)),
             height: 16,
             alpha: 1.0);
 
         addOn.DrawTexture(
             m_barFgTextureId,
-            (addOn.GetWidth() / 2) - 128,
+            (addOn.GetWidth() / 2) - (barWidth / 2),
             y,
-            width: 256,
+            width: barWidth,
             height: 16,
             alpha: 1.0);
 
-        addOn.DrawText(
-            m_font,
-            m_actor.GetTag(),
-            (addOn.GetWidth() / 2),
-            y + 2,
-            color: Font.CR_White,
-            align: 0.5);
+        if (isOpened)
+        {
+            addOn.DrawText(
+                m_font,
+                m_actor.GetTag(),
+                (addOn.GetWidth() / 2),
+                y + 2,
+                color: Font.CR_White,
+                align: 0.5,
+                alpha:m_textAlpha.Update(deltaTime));
+        }
     }
 }
