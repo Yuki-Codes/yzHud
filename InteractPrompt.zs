@@ -1,57 +1,56 @@
 #include "alignments.zs"
 
-class InteractPrompt ui
+class InteractPrompt : UiAddOn
 {
-    YzHud m_hud;
-    HUDFont m_font;
-    
-    private PromptDetector m_tracer;
-    private String m_promptText;
+    Font m_font;
 
-    private Interpolator m_alpha;
-    
-    void Init()
+    private ui PromptDetector m_tracer;
+    private ui String m_promptText;
+
+    private ui Interpolator m_alpha;
+
+    override void Initialize()
     {
         m_alpha = new("Interpolator");
-        
+
         let [useKey1, useKey2] = bindings.GetKeysForCommand("+use");
 		String keyname = bindings.NameKeys(useKey1, 0);
         m_promptText = String.Format("[%s]",  keyname);
     }
-        
-    void Draw(PlayerInfo player, double ticFrac)
+
+    // Scope: UI
+    override void Draw(float deltaTime)
     {
-        float alpha = m_alpha.Update(ticFrac);
-        
+        float alpha = m_alpha.Update(deltaTime);
+
         if (alpha > 0)
         {
-            m_hud.DrawString(
+            self.DrawText(
                 m_font,
                 m_promptText,
-                (-1, 32),
-                VerticalAlignment.Center | HorizontalAlignment.Center | TextAlignment.Center,
+                -1,
+                32,
                 alpha: alpha);
-                
-            m_hud.DrawTexture(
+
+            self.DrawTexture(
                 TexMan.CheckForTexture("interact"),
-                (0, 0),
-                VerticalAlignment.Center | HorizontalAlignment.Center | VerticalPivot.Center | HorizontalPivot.Center,
-                alpha * 0.75,
-                (2, 2));
+                0,
+                0,
+                alpha * 0.75);
         }
     }
-    
-    void Tick(PlayerInfo player)
+
+    override void Tick()
     {
         let mo = player.mo;
-        
+
 		// Do nothing if this player is a voodoo doll, or is dead:
 		if (!mo || mo.health <= 0 || !mo.player || !mo.player.mo || mo.player.mo != mo)
             return;
-            
+
         if (m_tracer == null)
             m_tracer = new('PromptDetector');
-        
+
 		// Fire from player's screen center:
 		Vector3 start = (mo.pos.xy, player.viewz);
 		Vector3 dir = (Actor.AngleToVector(mo.angle, cos(mo.pitch)), -sin(mo.pitch));
@@ -63,7 +62,7 @@ class InteractPrompt ui
             traceflags: 0,
             wallmask: 0,
             ignore: mo);
-        
+
         m_alpha.Target = 0;
 		if (m_tracer.results.HitType == TRACE_HitWall)
 		{
@@ -97,7 +96,7 @@ class PromptDetector : LineTracer
                 }
             }
 		}
-        
+
 		return TRACE_Skip;
 	}
 }

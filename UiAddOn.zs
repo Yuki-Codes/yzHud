@@ -1,46 +1,60 @@
 class UiAddOn : StaticEventHandler
 {
-    ui Playerinfo Player;
-    
+    ui PlayerInfo Player;
+
     private ui bool m_isInitialized;
     private ui int m_canvasWidth;
     private ui int m_canvasHeight;
     private ui int m_canvasScale;
-    
+    private ui float m_prevDrawTime;
+
     ui virtual void Initialize()
     {
     }
-    
+
     ui virtual void Draw(float deltaTime)
     {
     }
-    
+
+    ui virtual void Tick()
+    {
+    }
+
     override void RenderOverlay(RenderEvent event)
     {
         if (!m_isInitialized)
         {
             m_isInitialized = true;
-            
+
             m_canvasScale = 3;
             m_canvasWidth = Screen.GetWidth() / m_canvasScale;
             m_canvasHeight = Screen.GetHeight() / m_canvasScale;
-        
+
             self.Initialize();
         }
-        
-        self.Draw(event.FracTic);
+
+        float drawTime = MSTimeF();
+        float deltaTime = (drawTime - m_prevDrawTime) / 1000;
+        m_prevDrawTime = drawTime;
+
+        self.Draw(deltaTime);
     }
-    
+
+    override void UiTick()
+    {
+        self.Tick();
+    }
+
     ui int GetWidth()
     {
         return m_canvasWidth;
     }
-    
+
     ui int GetHeight()
     {
         return m_canvasHeight;
     }
-    
+
     ui void DrawTexture(
         TextureID texture,
         int x,
@@ -54,7 +68,7 @@ class UiAddOn : StaticEventHandler
     {
         int textureWidth, textureHeight = TexMan.GetSize(texture);
         Vector2 size = TexMan.GetScaledSize(texture);
-        
+
         if (width > 0 && height == 0)
         {
             scale = (width / size.X);
@@ -63,19 +77,19 @@ class UiAddOn : StaticEventHandler
         {
             scale = (height / size.Y);
         }
-        
+
         if (width == 0)
             width = size.x;
-            
+
         if (height == 0)
             height = size.y;
-        
+
         if (scale != 1.0)
         {
             width *= scale;
             height *= scale;
         }
-        
+
         int clipTop = 0;
         int clipBottom = m_canvasHeight;
         if (clipHeight != 0)
@@ -83,7 +97,7 @@ class UiAddOn : StaticEventHandler
             clipTop = (y - (clipHeight * anchor.y));
             clipBottom = clipTop + clipHeight;
         }
-        
+
         Screen.DrawTexture(
             texture,
             false,
@@ -101,7 +115,7 @@ class UiAddOn : StaticEventHandler
             DTA_VirtualWidth, m_canvasWidth,
             DTA_VirtualHeight, m_canvasHeight);
     }
-    
+
     ui void DrawText(
         Font font,
         String text,
@@ -112,7 +126,7 @@ class UiAddOn : StaticEventHandler
         float align = 0.0f)
     {
         x -= font.stringWidth(text) * align;
-        
+
         Screen.DrawText(
             font,
             color,

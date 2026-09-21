@@ -3,10 +3,10 @@ class Interpolator
     float Target;
     float Speed;
     float Current;
-    
+
     float Step;
-    
-    float Update(double ticFrac)
+
+    float Update(float deltaTime)
     {
         if (self.Step != 0)
         {
@@ -23,10 +23,9 @@ class Interpolator
         {
             if (self.Speed == 0)
                 self.Speed = 1.0f;
-                
-            float deltaTime = ticFrac / GameTicRate;
+
             float delta = (self.Target - self.Current) * (deltaTime * self.Speed * 10);
-            
+
             if (delta < 0.01f && delta > -0.001)
             {
                 self.Current = Target;
@@ -36,7 +35,7 @@ class Interpolator
                 self.Current += delta;
             }
         }
-        
-        return Current;
+
+        return self.Current;
     }
 }
