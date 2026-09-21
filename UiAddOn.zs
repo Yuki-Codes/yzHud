@@ -34,6 +34,9 @@ class UiAddOn : StaticEventHandler
 
     override void UiTick()
     {
+        if (self.Player == null)
+            return;
+
         if (!m_isInitialized)
         {
             m_isInitialized = true;
