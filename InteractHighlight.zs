@@ -51,7 +51,11 @@ class InteractHighlight : UiAddOn
 
         for (int i = 0; i < m_interacts.Size(); i++)
         {
-            m_interacts[i].Draw(event.viewPos, m_projectionCache.worldToClip);
+            m_interacts[i].Draw(
+                self.Player,
+                event.viewPos,
+                m_projectionCache.worldToClip,
+                m_deltaTime);
         }
     }
 }
@@ -60,20 +64,40 @@ class InteractHighlight : UiAddOn
 class LineInteract
 {
     private Line m_line;
+    private ui LineOfSightCheck m_tracer;
+
     private ui TextureId m_highlight;
+
+    private ui Interpolator m_alpha;
+    private ui Interpolator m_z;
 
     void Initialize(Line line)
     {
         m_line = line;
     }
 
-    ui void Draw(Vector3 viewPos, YzMatrix4 worldToClip)
+    ui void UiInitialize()
     {
+        m_highlight = TexMan.CheckForTexture("interact");
+        m_alpha = new("Interpolator");
+        m_z = new("Interpolator");
+        m_z.Speed = 0.5;
+
+        m_tracer = new("LineOfSightCheck");
+    }
+
+    ui void Draw(PlayerInfo player, Vector3 viewPos, YzMatrix4 worldToClip, float deltaTime)
+    {
+        if (m_line == null)
+            return;
+
         if (m_line.special == 0)
             return;
 
-        if (!m_highlight.IsValid())
-            m_highlight = TexMan.CheckForTexture("interact");
+        if (m_alpha == null)
+        {
+            self.UiInitialize();
+        }
 
         Vector2 a = m_line.v1.p;
         Vector2 b = m_line.v2.p;
@@ -83,16 +107,26 @@ class LineInteract
         pos.x = pos2d.x;
         pos.y = pos2d.y;
 
-        // TODO: Center sector height instead of view height.
-        pos.z = viewPos.z;
+        m_z.Target = player.mo.pos.z + 32;
+        pos.z = m_z.Update(deltaTime);
 
-        float distance = (pos - viewPos).Length();
+        Vector3 dir = pos - viewPos;
+        float distance = dir.Length();
 
-        float alpha = 1;
-        if (distance < 100 || distance > 1000)
-            alpha = 0;
+        // are we wthin range
+        m_alpha.Target = 1;
+        if (distance < 100 || distance > 500)
+            m_alpha.Target = 0;
+
+        // Has this sector been seen
+        // subsectors have this flag, not sectors? :think:
+        /*if (!(m_line.FrontSector.Flags & 2))
+        {
+            m_alpha.Target = 0;
+        }*/
 
         pos = worldToClip.multiplyVector3(pos);
+        float alpha = m_alpha.Update(deltaTime);
         if (abs(pos.x) <= 1.0 && abs(pos.y) <= 1.0 && abs(pos.z) <= 1.0)
         {
             Vector2 screenPos = YzGlobalMaths.NDCToViewport(pos);

@@ -2,6 +2,8 @@ class UiAddOn : StaticEventHandler
 {
     PlayerInfo Player;
 
+    protected ui float m_deltaTime;
+
     private ui bool m_isInitialized;
     private ui int m_canvasWidth;
     private ui int m_canvasHeight;
@@ -23,14 +25,14 @@ class UiAddOn : StaticEventHandler
     override void RenderOverlay(RenderEvent event)
     {
         float drawTime = MSTimeF();
-        float deltaTime = (drawTime - m_prevDrawTime) / 1000;
-        deltaTime = clamp(deltaTime, 0, 0.1);
+        m_deltaTime = (drawTime - m_prevDrawTime) / 1000;
+        m_deltaTime = clamp(m_deltaTime, 0, 0.1);
         m_prevDrawTime = drawTime;
 
         if (!m_isInitialized)
             return;
 
-        self.Draw(deltaTime);
+        self.Draw(m_deltaTime);
     }
 
     override void UiTick()
