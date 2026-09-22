@@ -24,7 +24,7 @@ class Interpolator
             if (self.Speed == 0)
                 self.Speed = 1.0f;
 
-            float delta = (self.Target - self.Current) * (deltaTime * self.Speed * 10);
+            float delta = (self.Target - self.Current) * (deltaTime * (self.Speed * 10));
 
             if (delta < 0.01f && delta > -0.001)
             {

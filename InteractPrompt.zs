@@ -74,7 +74,10 @@ class InteractPrompt : UiAddOn
             let line = m_tracer.results.HitLine;
             if (line.activation == SPAC_Use || line.activation == SPAC_UseThrough)
             {
-                m_alpha.Target = 1.0;
+                if (line.special != 0)
+                {
+                    m_alpha.Target = 1.0;
+                }
             }
         }
     }

@@ -5,4 +5,5 @@ GameInfo
     AddEventHandlers = "BossBar"
     AddEventHandlers = "InteractPrompt"
     AddEventHandlers = "KeyBar"
+    AddEventHandlers = "InteractHighlight"
 }

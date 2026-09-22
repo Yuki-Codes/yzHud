@@ -81,6 +81,7 @@ class KeyEntry ui
         }
         else if (key == null && m_key != null)
         {
+            Console.Printf("key lost");
             m_key == null;
             m_xPos.Current = uiAddOn.GetWidth() / 2;
             m_yPos.Current = uiAddOn.GetHeight() / 2;

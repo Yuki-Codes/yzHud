@@ -3,7 +3,7 @@ version "5.00"
 #include "PowerupBar.zs"
 #include "KeyBar.zs"
 #include "InteractPrompt.zs"
-
+#include "InteractHighlight.zs"
 #include "WeaponsList.zs"
 #include "BossBar.zs"
 
@@ -19,6 +19,7 @@ class YzHud : BaseStatusBar
     Interpolator m_ammo2Interpolator;
     Interpolator m_healthInterpolator;
     Interpolator m_armourInterpolator;
+    private ui float m_prevDrawTime;
 
     override void Init()
     {
@@ -40,19 +41,22 @@ class YzHud : BaseStatusBar
         m_armourInterpolator.Step = 3;
     }
 
-    override void Draw(int state, double ticFrac)
+    override void Draw(int state, float ticFrac)
     {
         super.Draw(state, TicFrac);
 
-        m_ammo1Interpolator.Update(ticFrac);
-        m_ammo2Interpolator.Update(ticFrac);
-        m_healthInterpolator.Update(ticFrac);
-        m_armourInterpolator.Update(ticFrac);
+        float drawTime = MSTimeF();
+        float deltaTime = (drawTime - m_prevDrawTime) / 1000;
+        deltaTime = clamp(deltaTime, 0, 0.1);
+        m_prevDrawTime = drawTime;
 
-        if (state != HUD_Fullscreen)
-        {
+        if (state == HUD_None)
             return;
-        }
+
+        m_ammo1Interpolator.Update(deltaTime);
+        m_ammo2Interpolator.Update(deltaTime);
+        m_healthInterpolator.Update(deltaTime);
+        m_armourInterpolator.Update(deltaTime);
 
         BeginHUD();
 
@@ -131,7 +135,7 @@ class YzHud : BaseStatusBar
         // Update helath interpolators
         m_healthInterpolator.Target = cPlayer.health;
 
-        let armor = BasicArmor(CPlayer.mo.FindInventory('BasicArmor', true));
+        BasicArmor armor = BasicArmor(CPlayer.mo.FindInventory('BasicArmor', true));
         if (armor == null)
         {
             m_armourInterpolator.Target = 0;
@@ -139,6 +143,7 @@ class YzHud : BaseStatusBar
         else
         {
             m_armourInterpolator.Target = armor.amount;
+            ////m_armourSaveInterpolator.Target = armor.SavePercent * 100;
         }
     }
 }

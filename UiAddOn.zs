@@ -24,6 +24,7 @@ class UiAddOn : StaticEventHandler
     {
         float drawTime = MSTimeF();
         float deltaTime = (drawTime - m_prevDrawTime) / 1000;
+        deltaTime = clamp(deltaTime, 0, 0.1);
         m_prevDrawTime = drawTime;
 
         if (!m_isInitialized)

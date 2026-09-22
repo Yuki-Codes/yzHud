@@ -1,0 +1,1214 @@
+class yzVariable {
+	private uint id;
+
+	static yzVariable internalCreate(uint curId) {
+		let ret = new();
+		ret.id = curId;
+		return ret;
+	}
+
+	uint getId() { return self.id; }
+}
+class yzVariableHasher : yzHasher {
+	override uint hash(Object o) { return yzVariable(o).getId(); }
+	override bool eq(Object o0, Object o1) {
+		return yzVariable(o0).getId() == yzVariable(o1).getId();
+	}
+}
+
+struct yzVariableManager {
+	private uint curId;
+
+	yzVariable createVariable() {
+		let ret = yzVariable.internalCreate(self.curId);
+		self.curId += 1;
+		return ret;
+	}
+}
+
+class yzTerm {
+	yzVariable variable;
+	double coefficient;
+
+	static yzTerm create(yzVariable variable, double coefficient) {
+		let ret = new();
+		ret.variable = variable;
+		ret.coefficient = coefficient;
+		return ret;
+	}
+}
+
+class yzExpr {
+	Array<yzTerm> terms;
+	double constant;
+
+	static yzExpr fromConstant(double v) {
+		let ret = new();
+		ret.constant = v;
+		return ret;
+	}
+	static yzExpr c(double v) { return yzExpr.fromConstant(v); }
+
+	static yzExpr fromTerm(yzTerm term) {
+		let ret = new();
+		ret.terms.push(term);
+		return ret;
+	}
+
+	static yzExpr fromVariable(yzVariable variable) {
+		let ret = new();
+		ret.terms.push(yzTerm.create(variable, 1.0));
+		return ret;
+	}
+	static yzExpr v(yzVariable variable) { return yzExpr.fromVariable(variable); }
+
+	static yzExpr create() {
+		let ret = new();
+		return ret;
+	}
+
+	void negate() {
+		self.constant = -self.constant;
+		for (let i = 0; i < self.terms.size(); i++) {
+			let t = self.terms[i];
+			t.coefficient = -t.coefficient;
+		}
+	}
+
+	yzExpr addAssignVariable(yzVariable variable, double coefficient = 1.0) {
+		self.terms.push(yzTerm.create(variable, coefficient));
+		return self;
+	}
+	yzExpr addAssignConstant(double constant) {
+		self.constant += constant;
+		return self;
+	}
+	yzExpr addAssignExpression(yzExpr e) {
+		for (let i = 0; i < e.terms.size(); i++) {
+			self.terms.push(e.terms[i]);
+		}
+		self.constant += e.constant;
+		return self;
+	}
+	yzExpr mulAssign(double coeff) {
+		for (let i = 0; i < self.terms.size(); i++) {
+			self.terms[i].coefficient *= coeff;
+		}
+		self.constant *= coeff;
+		return self;
+	}
+}
+
+struct yzStrength {
+	static double create(double a, double b, double c, double w) {
+		return
+			clamp(a * w, 0.0, 1000.0) * 1000000.0 +
+			clamp(b * w, 0.0, 1000.0) * 1000.0 +
+			clamp(c * w, 0.0, 1000.0);
+	}
+
+	const REQUIRED = 1001001000.0;
+	const STRONG = 1000000.0;
+	const MEDIUM = 1000.0;
+	const WEAK = 1.0;
+
+	static double clip(double s) {
+		return clamp(s, 0.0, REQUIRED);
+	}
+}
+
+enum yzRel {
+	yzRel_LEq,
+	yzRel_Eq,
+	yzRel_GEq,
+}
+
+struct yzConstraintManager {
+	private uint curId;
+
+	yzConstraint createConstraint(yzExpr e, yzRel op, double strength) {
+		let ret = yzConstraint.internalCreate(e, op, strength, self.curId);
+		self.curId += 1;
+		return ret;
+	}
+}
+
+class yzConstraint {
+	private yzExpr expression;
+	private double strength;
+	private yzRel op;
+	private uint id;
+
+	static yzConstraint internalCreate(yzExpr e, yzRel op, double strength, uint curId) {
+		let ret = new();
+		ret.expression = e;
+		ret.op = op;
+		ret.strength = strength;
+		ret.id = curId;
+		return ret;
+	}
+
+	yzExpr getExpr() { return self.expression; }
+	yzRel getOp() { return self.op; }
+	double getStrength() { return self.strength; }
+	uint getId() { return self.id; }
+}
+class yzConstraintHasher : yzHasher {
+	override uint hash(Object o) { return yzConstraint(o).getId(); }
+	override bool eq(Object o0, Object o1) {
+		return yzConstraint(o0).getId() == yzConstraint(o1).getId();
+	}
+}
+
+class yzConstraintBuilderWithRhs {
+	yzExpr lhs;
+	yzExpr rhs;
+	yzRel rel;
+	double strength;
+}
+
+enum yzSymbolKind {
+	yzSymbolKind_Invalid,
+	yzSymbolKind_External,
+	yzSymbolKind_Slack,
+	yzSymbolKind_Error,
+	yzSymbolKind_Dummy,
+}
+
+class yzSymbol {
+	uint id;
+	yzSymbolKind kind;
+
+	static yzSymbol invalid() {
+		let ret = new();
+		ret.id = 0;
+		ret.kind = yzSymbolKind_Invalid;
+		return ret;
+	}
+
+	static yzSymbol create(uint id, yzSymbolKind kind) {
+		let ret = new();
+		ret.id = id;
+		ret.kind = kind;
+		return ret;
+	}
+
+	yzSymbol clone() {
+		let ret = new();
+		ret.id = self.id;
+		ret.kind = self.kind;
+		return ret;
+	}
+
+	String repr() {
+		let ret = "Symbol(";
+		ret.appendFormat("%d, ", self.id);
+		switch (self.kind) {
+			case yzSymbolKind_Invalid:  ret.appendFormat("Invalid"); break;
+			case yzSymbolKind_External: ret.appendFormat("External"); break;
+			case yzSymbolKind_Slack:    ret.appendFormat("Slack"); break;
+			case yzSymbolKind_Error:    ret.appendFormat("Error"); break;
+			case yzSymbolKind_Dummy:    ret.appendFormat("Dummy"); break;
+		}
+		ret.appendFormat(")");
+		return ret;
+	}
+}
+
+class yzSymbolHasher : yzHasher {
+	override uint hash(Object o) {
+		let o = yzSymbol(o);
+		let seed = o.id;
+		hashCombine(seed, o.kind);
+		return seed;
+	}
+	override bool eq(Object o0, Object o1) {
+		let o0 = yzSymbol(o0);
+		let o1 = yzSymbol(o1);
+
+		return
+			o0.id == o1.id &&
+			o0.kind == o1.kind;
+	}
+}
+
+class yzRow {
+	yzHashMap/*<Symbol, BoxedDouble>*/ cells;
+	double constant;
+
+	static yzRow create(double constant) {
+		let ret = new();
+		ret.cells = yzHashMap.create(new("yzSymbolHasher"));
+		ret.constant = constant;
+		return ret;
+	}
+
+	yzRow clone() {
+		let ret = new();
+		ret.cells = yzHashMap.create(new("yzSymbolHasher"));
+		let iter = self.cells.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let k = yzSymbol(ko);
+			let v = yzBoxedDouble(vo);
+
+			ret.cells.insert(k.clone(), v.clone());
+		}
+		ret.constant = self.constant;
+		return ret;
+	}
+
+	double add(double v) {
+		self.constant += v;
+		return self.constant;
+	}
+
+	void insertSymbol(yzSymbol s, double coefficient) {
+		let g = self.cells.get(s);
+		if (g is "yzHashUnoccupied") {
+			if (!yzGlobalMaths.nearZero(coefficient)) {
+				self.cells.insert(s, yzBoxedDouble.create(coefficient));
+			}
+		} else {
+			let g = yzBoxedDouble(g);
+			g.val += coefficient;
+			if (yzGlobalMaths.nearZero(g.val)) {
+				self.cells.remove(s);
+			}
+		}
+	}
+
+	bool insertRow(yzRow other, double coefficient) {
+		let constantDiff = other.constant * coefficient;
+		self.constant += constantDiff;
+		let iter = other.cells.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let s = yzSymbol(ko);
+			let v = yzBoxedDouble(vo).val;
+
+			self.insertSymbol(s, v * coefficient);
+		}
+		return constantDiff != 0.0;
+	}
+
+	void remove(yzSymbol s) {
+		self.cells.remove(s);
+	}
+
+	void reverseSign() {
+		self.constant = -self.constant;
+		let iter = self.cells.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+			let v = yzBoxedDouble(vo);
+			v.val = -v.val;
+		}
+	}
+
+	void solveForSymbol(yzSymbol s) {
+		let e = yzBoxedDouble(self.cells.remove(s)).val;
+		let coeff = -1.0 / e;
+		self.constant *= coeff;
+		let iter = self.cells.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+			let v = yzBoxedDouble(vo);
+			v.val *= coeff;
+		}
+	}
+
+	void solveForSymbols(yzSymbol lhs, yzSymbol rhs) {
+		self.insertSymbol(lhs, -1.0);
+		self.solveForSymbol(rhs);
+	}
+
+	double coefficientFor(yzSymbol s) {
+		let v = self.cells.get(s);
+		return (!(v is "yzHashUnoccupied")) ? yzBoxedDouble(v).val : 0.0;
+	}
+
+	bool substitute(yzSymbol s, yzRow row) {
+		let e = self.cells.remove(s);
+		if (!(e is "yzHashUnoccupied")) {
+			let coeff = yzBoxedDouble(e).val;
+			return self.insertRow(row, coeff);
+		} else {
+			return false;
+		}
+	}
+}
+
+enum yzAddConstraintError {
+	yzAddConstraintError_None,
+	yzAddConstraintError_DuplicateConstraint,
+	yzAddConstraintError_UnsatisfiableConstraint,
+}
+
+enum yzRemoveConstraintError {
+	yzRemoveConstraintError_None,
+	yzRemoveConstraintError_UnknownConstraint,
+}
+
+enum yzAddEditVariableError {
+	yzAddEditVariableError_None,
+	yzAddEditVariableError_DuplicateEditVariable,
+	yzAddEditVariableError_BadRequiredStrength,
+}
+
+enum yzRemoveEditVariableError {
+	yzRemoveEditVariableError_None,
+	yzRemoveEditVariableError_UnknownEditVariable,
+}
+
+enum yzSuggestValueError {
+	yzSuggestValueError_None,
+	yzSuggestValueError_UnknownEditVariable,
+}
+
+class yzTag {
+	yzSymbol marker;
+	yzSymbol other;
+
+	static yzTag create(yzSymbol marker = NULL, yzSymbol other = NULL) {
+		let ret = new();
+		ret.marker = marker;
+		ret.other = other;
+		return ret;
+	}
+}
+
+class yzEditInfo {
+	yzTag tag;
+	yzConstraint constraint;
+	double constant;
+
+	static yzEditInfo create(yzTag tag, yzConstraint constraint, double constant) {
+		let ret = new();
+		ret.tag = tag;
+		ret.constraint = constraint;
+		ret.constant = constant;
+		return ret;
+	}
+}
+
+class yzVarDataEntry {
+	double value;
+	yzSymbol symbol;
+	uint count;
+
+	static yzVarDataEntry create(double value, yzSymbol symbol, uint count) {
+		let ret = new();
+		ret.value = value;
+		ret.symbol = symbol;
+		ret.count = count;
+		return ret;
+	}
+}
+
+class yzPublicChangesEntry {
+	yzVariable variable;
+	double value;
+
+	static yzPublicChangesEntry create(yzVariable variable, double value) {
+		let ret = new();
+		ret.variable = variable;
+		ret.value = value;
+		return ret;
+	}
+}
+
+class yzSolver {
+	private yzHashMap/*<Constraint, Tag>*/ cns;
+	private yzHashMap/*<Variable, VarDataEntry>*/ varData;
+	private yzHashMap/*<Symbol, Variable>*/ varForSymbol;
+	private Array<yzPublicChangesEntry> publicChanges;
+	private yzHashSet/*<Variable>*/ changed;
+	private bool shouldClearChanges;
+	private yzHashMap/*<Symbol, Row>*/ rows;
+	private yzHashMap/*<Variable, EditInfo>*/ edits;
+	private Array<yzSymbol> infeasibleRows;
+	private yzRow objective;
+	private /* Nullable */ yzRow artificial;
+	private uint idTick;
+
+	private yzVariableManager variableManager;
+	yzConstraintManager constraintManager;
+
+	static yzSolver create() {
+		let constraintHasher = new("yzConstraintHasher");
+		let variableHasher = new("yzVariableHasher");
+		let symbolHasher = new("yzSymbolHasher");
+
+		let ret = new();
+		ret.cns = yzHashMap.create(constraintHasher);
+		ret.varData = yzHashMap.create(variableHasher);
+		ret.varForSymbol = yzHashMap.create(symbolHasher);
+		/* ret.publicChanges = default; */
+		ret.changed = yzHashSet.create(variableHasher);
+		ret.shouldClearChanges = false;
+		ret.rows = yzHashMap.create(symbolHasher);
+		ret.edits = yzHashMap.create(variableHasher);
+		/* ret.infeasibleRows = default; */
+		ret.objective = yzRow.create(0.0);
+		ret.artificial = NULL;
+		ret.idTick = 1;
+
+		return ret;
+	}
+
+	yzVariable createVariable() {
+		return self.variableManager.createVariable();
+	}
+
+	static void assertNoErr(int errcode) {
+		if (errcode != 0) { throwAbortException("err %d", errcode); }
+	}
+
+	yzAddConstraintError, yzConstraint addConstraintFromRelation(
+		yzExpr lhs,
+		Name op,
+		yzExpr rhs,
+		double strength = yzStrength.REQUIRED
+	) {
+		rhs.negate();
+		lhs.addAssignExpression(rhs);
+		if (op != '==' && op != '<=' && op != '>=') {
+			throwAbortException("invalid op string '%s'", op);
+		}
+		let op = (op == '==') ? yzRel_Eq : (op == '<=') ? yzRel_Leq : yzRel_Geq;
+		let constraint = self.constraintManager.createConstraint(lhs, op, strength);
+		return self.addConstraint(constraint), constraint;
+	}
+
+	yzAddConstraintError addConstraint(yzConstraint constraint) {
+		if (self.cns.containsKey(constraint)) {
+			return yzAddConstraintError_DuplicateConstraint;
+		}
+
+		yzRow row; yzTag tag;
+		[row, tag] = self.createRow(constraint);
+		let subject = chooseSubject(row, tag);
+
+		if (subject.kind == yzSymbolKind_Invalid && allDummies(row)) {
+			if (!yzGlobalMaths.nearZero(row.constant)) {
+				return yzAddConstraintError_UnsatisfiableConstraint;
+			} else {
+				subject = tag.marker;
+			}
+		}
+		if (subject.kind == yzSymbolKind_Invalid) {
+			if (!self.addWithArtificialVariable(row)) {
+				return yzAddConstraintError_UnsatisfiableConstraint;
+			}
+		} else {
+			row.solveForSymbol(subject);
+			self.substitute(subject, row);
+
+			if (subject.kind == yzSymbolKind_External && row.constant != 0.0) {
+				let v = yzVariable(self.varForSymbol.get(subject));
+				self.varChanged(v);
+			}
+			self.rows.insert(subject, row);
+		}
+
+		self.cns.insert(constraint, tag);
+
+		let objective = self.objective;
+		self.optimise(objective);
+
+		return yzAddConstraintError_None;
+	}
+
+	yzRemoveConstraintError removeConstraint(yzConstraint constraint) {
+		let t = self.cns.remove(constraint);
+		if (t is "yzHashUnoccupied") {
+			return yzRemoveConstraintError_UnknownConstraint;
+		}
+		let tag = yzTag(t);
+
+		self.removeConstraintEffects(constraint, tag);
+
+		if (self.rows.remove(tag.marker) is "yzHashUnoccupied") {
+			yzSymbol leaving; yzRow row;
+			[leaving, row] = self.getMarkerLeavingRow(tag.marker);
+			row.solveForSymbols(leaving, tag.marker);
+			self.substitute(tag.marker, row);
+		}
+
+		let objective = self.objective;
+		self.optimise(objective);
+
+		let cexpr = constraint.getExpr();
+		for (let i = 0; i < cexpr.terms.size(); i++) {
+			let term = cexpr.terms[i];
+			if (!yzGlobalMaths.nearZero(term.coefficient)) {
+				let shouldRemove = false;
+				let v = self.varData.get(term.variable);
+				if (!(v is "yzHashUnoccupied")) {
+					let v = yzVarDataEntry(v);
+					v.count -= 1;
+					shouldRemove = v.count == 0;
+				}
+				if (shouldRemove) {
+					self.varForSymbol.remove(yzVarDataEntry(self.varData.get(term.variable)).symbol);
+					self.varData.remove(term.variable);
+				}
+			}
+		}
+
+		return yzRemoveConstraintError_None;
+	}
+
+	bool hasConstraint(yzConstraint constraint) {
+		return self.cns.containsKey(constraint);
+	}
+
+	yzAddEditVariableError addEditVariable(yzVariable v, double strength) {
+		if (self.edits.containsKey(v)) {
+			return yzAddEditVariableError_DuplicateEditVariable;
+		}
+		let strength = yzStrength.clip(strength);
+		if (strength == yzStrength.REQUIRED) {
+			return yzAddEditVariableError_BadRequiredStrength;
+		}
+		let cn = self.constraintManager.createConstraint(
+			yzExpr.fromTerm(yzTerm.create(v, 1.0)),
+			yzRel_Eq,
+			strength
+		);
+		{
+			let err = self.addConstraint(cn);
+			if (err != 0) { throwAbortException("shouldn't happen"); }
+		}
+		self.edits.insert(
+			v,
+			yzEditInfo.create(
+				yzTag(self.cns.get(cn)),
+				cn,
+				0.0
+			)
+		);
+
+		return yzAddEditVariableError_None;
+	}
+
+	yzRemoveEditVariableError removeEditVariable(yzVariable v) {
+		let e = self.edits.remove(v);
+		if (!(e is "yzHashUnoccupied")) {
+			let constraint = yzEditInfo(e).constraint;
+			let err = self.removeConstraint(constraint);
+			if (err == yzRemoveConstraintError_UnknownConstraint) {
+				throwAbortException("Edit constraint not in system.");
+			}
+			return yzRemoveEditVariableError_None;
+		} else {
+			return yzRemoveEditVariableError_UnknownEditVariable;
+		}
+	}
+
+	bool hasEditVariable(yzVariable v) {
+		return self.edits.containsKey(v);
+	}
+
+	yzSuggestValueError suggestValue(yzVariable variable, double value) {
+		let i = self.edits.get(variable);
+		if (i is "yzHashUnoccupied") {
+			return yzSuggestValueError_UnknownEditVariable;
+		}
+		let info = yzEditInfo(i);
+		let infoTagMarker = info.tag.marker;
+		let infoTagOther = info.tag.other;
+		let delta = value - info.constant;
+		info.constant = value;
+
+		{
+			let rm = self.rows.get(infoTagMarker);
+			let ro = self.rows.get(infoTagOther);
+			if (!(rm is "yzHashUnoccupied")) {
+				let row = yzRow(rm);
+				if (row.add(-delta) < 0.0) {
+					infeasibleRows.push(infoTagMarker);
+				}
+			} else if (!(ro is "yzHashUnoccupied")) {
+				let row = yzRow(ro);
+				if (row.add(delta) < 0.0) {
+					infeasibleRows.push(infoTagOther);
+				}
+			} else {
+				let iter = self.rows.iter();
+				while (true) {
+					Object ko, vo;
+					[ko, vo] = iter.next();
+					if (ko is "yzHashUnoccupied") { break; }
+
+					let symbol = yzSymbol(ko);
+					let row = yzRow(vo);
+
+					let coeff = row.coefficientFor(infoTagMarker);
+					let diff = delta * coeff;
+					if (diff != 0.0 && symbol.kind == yzSymbolKind_External) {
+						let v = yzVariable(self.varForSymbol.get(symbol));
+						if (self.shouldClearChanges) {
+							self.changed.clear();
+							self.shouldClearChanges = false;
+						}
+						self.changed.insert(v);
+					}
+					if (
+						coeff != 0.0 &&
+						row.add(diff) < 0.0 &&
+						symbol.kind != yzSymbolKind_External
+					) {
+						infeasibleRows.push(symbol);
+					}
+				}
+			}
+		}
+
+		self.dualOptimise();
+
+		return yzSuggestValueError_None;
+	}
+
+	private void varChanged(yzVariable v) {
+		if (self.shouldClearChanges) {
+			self.changed.clear();
+			self.shouldClearChanges = false;
+		}
+		self.changed.insert(v);
+	}
+
+	void fetchChanges(out Array<yzPublicChangesEntry> ret) {
+		if (self.shouldClearChanges) {
+			self.changed.clear();
+			self.shouldClearChanges = false;
+		} else {
+			self.shouldClearChanges = true;
+		}
+		self.publicChanges.clear();
+
+		let iter = self.changed.iter();
+		while (true) {
+			let vo = iter.next();
+			if (vo is "yzHashUnoccupied") { break; }
+			let v = yzVariable(vo);
+
+			let vd = self.varData.get(v);
+			if (!(vd is "yzHashUnoccupied")) {
+				let varData = yzVarDataEntry(vd);
+				let r = self.rows.get(varData.symbol);
+				let newValue = 0.0;
+				if (!(r is "yzHashUnoccupied")) {
+					newValue = yzRow(r).constant;
+				}
+				let oldValue = varData.value;
+				if (oldValue != newValue) {
+					self.publicChanges.push(
+						yzPublicChangesEntry.create(v, newValue)
+					);
+					varData.value = newValue;
+				}
+			}
+		}
+
+		ret.copy(self.publicChanges);
+	}
+
+	void reset() {
+		self.rows.clear();
+		self.cns.clear();
+		self.varData.clear();
+		self.varForSymbol.clear();
+		self.changed.clear();
+		self.shouldClearChanges = false;
+		self.edits.clear();
+		self.infeasibleRows.clear();
+		self.objective = yzRow.create(0.0);
+		self.artificial = NULL;
+		self.idTick = 1;
+	}
+
+	private yzSymbol getVarSymbol(yzVariable v) {
+		yzVarDataEntry value;
+		let vd = self.varData.get(v);
+		if (!(vd is "yzHashUnoccupied")) {
+			value = yzVarDataEntry(vd);
+		} else {
+			let s = yzSymbol.create(self.idTick, yzSymbolKind_External);
+			self.varForSymbol.insert(s, v);
+			self.idTick += 1;
+			value = yzVarDataEntry.create(double.NAN, s, 0);
+			self.varData.insert(v, value);
+		}
+		value.count += 1;
+		return value.symbol;
+	}
+
+	private yzRow, yzTag createRow(yzConstraint constraint) {
+		let expr = constraint.getExpr();
+		let row = yzRow.create(expr.constant);
+		for (let i = 0; i < expr.terms.size(); i++) {
+			let term = expr.terms[i];
+			if (!yzGlobalMaths.nearZero(term.coefficient)) {
+				let symbol = self.getVarSymbol(term.variable);
+				let o = self.rows.get(symbol);
+				if (!(o is "yzHashUnoccupied")) {
+					let otherRow = yzRow(o);
+					row.insertRow(otherRow, term.coefficient);
+				} else {
+					row.insertSymbol(symbol, term.coefficient);
+				}
+			}
+		}
+
+		let objective = self.objective;
+
+		yzTag tag;
+		let constraintOp = constraint.getOp();
+		switch (constraintOp) {
+		case yzRel_Geq:
+		case yzRel_Leq: {
+			let coeff = (constraintOp == yzRel_Leq) ? 1.0 : -1.0;
+			let slack = yzSymbol.create(self.idTick, yzSymbolKind_Slack);
+			self.idTick += 1;
+			row.insertSymbol(slack, coeff);
+			let constraintStrength = constraint.getStrength();
+			if (constraintStrength < yzStrength.REQUIRED) {
+				let error = yzSymbol.create(self.idTick, yzSymbolKind_Error);
+				self.idTick += 1;
+				row.insertSymbol(error, -coeff);
+				objective.insertSymbol(error, constraintStrength);
+				tag = yzTag.create(
+					marker: slack,
+					other: error
+				);
+			} else {
+				tag = yzTag.create(
+					marker: slack,
+					other: yzSymbol.invalid()
+				);
+			}
+			break;
+		}
+		case yzRel_Eq: {
+			let constraintStrength = constraint.getStrength();
+			if (constraintStrength < yzStrength.REQUIRED) {
+				let errplus = yzSymbol.create(self.idTick, yzSymbolKind_Error);
+				self.idTick += 1;
+				let errminus = yzSymbol.create(self.idTick, yzSymbolKind_Error);
+				self.idTick += 1;
+				row.insertSymbol(errplus,  -1.0);
+				row.insertSymbol(errminus,  1.0);
+				objective.insertSymbol(errplus, constraintStrength);
+				objective.insertSymbol(errminus, constraintStrength);
+				tag = yzTag.create(
+					marker: errplus,
+					other: errminus
+				);
+			} else {
+				let dummy = yzSymbol.create(self.idTick, yzSymbolKind_Dummy);
+				self.idTick += 1;
+				row.insertSymbol(dummy, 1.0);
+				tag = yzTag.create(
+					marker: dummy,
+					other: yzSymbol.invalid()
+				);
+			}
+			break;
+		}
+		default:
+			throwAbortException("shouldn't happen");
+		}
+
+		if (row.constant < 0.0) {
+			row.reverseSign();
+		}
+		return row, tag;
+	}
+
+	static private yzSymbol chooseSubject(yzRow row, yzTag tag) {
+		let iter = row.cells.iter();
+		while (true) {
+			let ko = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+			let s = yzSymbol(ko);
+
+			if (s.kind == yzSymbolKind_External) {
+				return s;
+			}
+		}
+		if (tag.marker.kind == yzSymbolKind_Slack || tag.marker.kind == yzSymbolKind_Error) {
+			if (row.coefficientFor(tag.marker) < 0.0) {
+				return tag.marker;
+			}
+		}
+		if (tag.other.kind == yzSymbolKind_Slack || tag.other.kind == yzSymbolKind_Error) {
+			if (row.coefficientFor(tag.other) < 0.0) {
+				return tag.other;
+			}
+		}
+		return yzSymbol.invalid();
+	}
+
+	private bool addWithArtificialVariable(yzRow row) {
+		let art = yzSymbol.create(self.idTick, yzSymbolKind_Slack);
+		self.idTick += 1;
+		self.rows.insert(art, row.clone());
+		self.artificial = row.clone();
+
+		let artificial = self.artificial;
+		self.optimise(artificial);
+		let success = yzGlobalMaths.nearZero(artificial.constant);
+		self.artificial = NULL;
+
+		let r = self.rows.remove(art);
+		if (!(r is "yzHashUnoccupied")) {
+			let row = yzRow(r);
+			if (row.cells.isEmpty()) {
+				return success;
+			}
+			let entering = anyPivotableSymbol(row);
+			if (entering.kind == yzSymbolKind_Invalid) {
+				return false;
+			}
+			row.solveForSymbols(art, entering);
+			self.substitute(entering, row);
+			self.rows.insert(entering, row);
+		}
+
+		let iter = self.rows.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let row = yzRow(vo);
+
+			row.remove(art);
+		}
+		self.objective.remove(art);
+		return success;
+	}
+
+	private void substitute(yzSymbol symbol, yzRow row) {
+		let iter = self.rows.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let otherSymbol = yzSymbol(ko);
+			let otherRow = yzRow(vo);
+
+			let constantChanged = otherRow.substitute(symbol, row);
+			if (otherSymbol.kind == yzSymbolKind_External && constantChanged) {
+				let v = yzVariable(self.varForSymbol.get(otherSymbol));
+				if (self.shouldClearChanges) {
+					self.changed.clear();
+					self.shouldClearChanges = false;
+				}
+				self.changed.insert(v);
+			}
+			if (otherSymbol.kind != yzSymbolKind_External && otherRow.constant < 0.0) {
+				self.infeasibleRows.push(otherSymbol);
+			}
+		}
+		self.objective.substitute(symbol, row);
+		if (self.artificial != NULL) {
+			let artificial = self.artificial;
+			artificial.substitute(symbol, row);
+		}
+	}
+
+	private void optimise(yzRow objective) {
+		while (true) {
+			let entering = getEnteringSymbol(objective);
+			if (entering.kind == yzSymbolKind_Invalid) {
+				return;
+			}
+			yzSymbol leaving;
+			yzRow row;
+			[leaving, row] = self.getLeavingRow(entering);
+			if (leaving == NULL) {
+				throwAbortException("internal solver error: the objective is unbounded");
+			}
+			row.solveForSymbols(leaving, entering);
+			self.substitute(entering, row);
+			if (entering.kind == yzSymbolKind_External && row.constant != 0.0) {
+				let v = yzVariable(self.varForSymbol.get(entering));
+				self.varChanged(v);
+			}
+			self.rows.insert(entering, row);
+		}
+	}
+
+	private void dualOptimise() {
+		while (self.infeasibleRows.size() != 0u) {
+			let leaving = self.infeasibleRows[self.infeasibleRows.size() - 1];
+			self.infeasibleRows.pop();
+
+			yzRow row;
+			let e = self.rows.get(leaving);
+			if (!(e is "yzHashUnoccupied")) {
+				let entry = yzRow(e);
+				if (entry.constant < 0.0) {
+					row = entry;
+					self.rows.remove(leaving);
+				} else {
+					row = NULL;
+				}
+			} else {
+				row = NULL;
+			}
+			if (row != NULL) {
+				let entering = self.getDualEnteringSymbol(row);
+				if (entering.kind == yzSymbolKind_Invalid) {
+					throwAbortException("internal solver error: dual optimise failed");
+				}
+				row.solveForSymbols(leaving, entering);
+				self.substitute(entering, row);
+				if (entering.kind == yzSymbolKind_External && row.constant != 0.0) {
+					let v = yzVariable(self.varForSymbol.get(entering));
+					self.varChanged(v);
+				}
+				self.rows.insert(entering, row);
+			}
+		}
+	}
+
+	private yzSymbol getEnteringSymbol(yzRow objective) {
+		let iter = objective.cells.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let symbol = yzSymbol(ko);
+			let value = yzBoxedDouble(vo).val;
+
+			if (symbol.kind != yzSymbolKind_Dummy && value < 0.0) {
+				return symbol;
+			}
+		}
+		return yzSymbol.invalid();
+	}
+
+	private yzSymbol getDualEnteringSymbol(yzRow row) {
+		let entering = yzSymbol.invalid();
+		let ratio = double.INFINITY;
+		let objective = self.objective;
+		let iter = row.cells.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let symbol = yzSymbol(ko);
+			let value = yzBoxedDouble(vo).val;
+
+			if (value > 0.0 && symbol.kind != yzSymbolKind_Dummy) {
+				let coeff = objective.coefficientFor(symbol);
+				let r = coeff / value;
+				if (r < ratio) {
+					ratio = r;
+					entering = symbol;
+				}
+			}
+		}
+		return entering;
+	}
+
+	private static yzSymbol anyPivotableSymbol(yzRow row) {
+		let iter = row.cells.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let symbol = yzSymbol(ko);
+
+			if (symbol.kind == yzSymbolKind_Slack || symbol.kind == yzSymbolKind_Error) {
+				return symbol;
+			}
+		}
+		return yzSymbol.invalid();
+	}
+
+	private yzSymbol, yzRow getLeavingRow(yzSymbol entering) {
+		let ratio = double.INFINITY;
+		yzSymbol found = NULL;
+		let iter = self.rows.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let symbol = yzSymbol(ko);
+			let row = yzRow(vo);
+
+			if (symbol.kind != yzSymbolKind_External) {
+				let temp = row.coefficientFor(entering);
+				if (temp < 0.0) {
+					let tempRatio = -row.constant / temp;
+					if (tempRatio < ratio) {
+						ratio = tempRatio;
+						found = symbol;
+					}
+				}
+			}
+		}
+		if (found != NULL) {
+			return found, yzRow(self.rows.remove(found));
+		} else {
+			return NULL, NULL;
+		}
+	}
+
+	private yzSymbol, yzRow getMarkerLeavingRow(yzSymbol marker) {
+		let r1 = double.INFINITY;
+		let r2 = r1;
+		yzSymbol first = NULL;
+		yzSymbol second = NULL;
+		yzSymbol third = NULL;
+		let iter = self.rows.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let symbol = yzSymbol(ko);
+			let row = yzRow(vo);
+
+			let c = row.coefficientFor(marker);
+			if (c == 0.0) {
+				continue;
+			}
+			if (symbol.kind == yzSymbolKind_External) {
+				third = symbol;
+			} else if (c < 0.0) {
+				let r = -row.constant / c;
+				if (r < r1) {
+					r1 = r;
+					first = symbol;
+				}
+			} else {
+				let r = row.constant / c;
+				if (r < r2) {
+					r2 = r;
+					second = symbol;
+				}
+			}
+		}
+		let s =
+			(first != NULL)
+			? first
+			: (second != NULL)
+			  ? second
+			  : third;
+		if (s != NULL) {
+			if (s.kind == yzSymbolKind_External && yzRow(self.rows.get(s)).constant != 0.0) {
+				let v = yzVariable(self.varForSymbol.get(s));
+				self.varChanged(v);
+			}
+			let r = self.rows.remove(s);
+			if (!(r is "yzHashUnoccupied")) {
+				return s, yzRow(r);
+			} else {
+				return NULL, NULL;
+			}
+		} else {
+			return NULL, NULL;
+		}
+	}
+
+	private void removeConstraintEffects(yzConstraint cn, yzTag tag) {
+		if (tag.marker.kind == yzSymbolKind_Error) {
+			self.removeMarkerEffects(tag.marker, cn.getStrength());
+		} else if (tag.other.kind == yzSymbolKind_Error) {
+			self.removeMarkerEffects(tag.other, cn.getStrength());
+		}
+	}
+
+	private void removeMarkerEffects(yzSymbol marker, double strength) {
+		let r = self.rows.get(marker);
+		if (!(r is "yzHashUnoccupied")) {
+			let row = yzRow(r);
+			self.objective.insertRow(row, -strength);
+		} else {
+			self.objective.insertSymbol(marker, -strength);
+		}
+	}
+
+	private static bool allDummies(yzRow row) {
+		let iter = row.cells.iter();
+		while (true) {
+			let ko = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+			let s = yzSymbol(ko);
+
+			if (s.kind != yzSymbolKind_Dummy) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	static void printRow(yzRow row) {
+		let ret = "row = Row {\n    cells: {\n";
+
+		let iter = row.cells.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let symbol = yzSymbol(ko);
+			let val = yzBoxedDouble(vo).val;
+
+			ret.appendFormat("        %s: %f,\n", symbol.repr(), val);
+		}
+		ret.appendFormat("    },\n    constant: %f,\n}", row.constant);
+		Console.printf(ret);
+	}
+
+	private void printRows() {
+		let ret = "self.rows = {\n";
+		let iter = self.rows.iter();
+		while (true) {
+			Object ko, vo;
+			[ko, vo] = iter.next();
+			if (ko is "yzHashUnoccupied") { break; }
+
+			let symbol = yzSymbol(ko);
+			let row = yzRow(vo);
+
+			ret.appendFormat("    %s: Row {\n        cells: {\n", symbol.repr());
+
+			let iter = row.cells.iter();
+			while (true) {
+				Object ko, vo;
+				[ko, vo] = iter.next();
+				if (ko is "yzHashUnoccupied") { break; }
+
+				let symbol = yzSymbol(ko);
+				let val = yzBoxedDouble(vo).val;
+
+				ret.appendFormat("            %s: %f,\n", symbol.repr(), val);
+			}
+			ret.appendFormat("        },\n        constant: %f,\n    },\n", row.constant);
+		}
+		ret.appendFormat("}");
+		Console.printf(ret);
+	}
+}
