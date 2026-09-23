@@ -22,13 +22,16 @@ class UiAddOn : StaticEventHandler
     {
     }
 
-    override void RenderOverlay(RenderEvent event)
+    override void RenderUnderlay(RenderEvent event)
     {
         float drawTime = MSTimeF();
         m_deltaTime = (drawTime - m_prevDrawTime) / 1000;
         m_deltaTime = clamp(m_deltaTime, 0, 0.1);
         m_prevDrawTime = drawTime;
+    }
 
+    override void RenderOverlay(RenderEvent event)
+    {
         if (!m_isInitialized)
             return;
 
