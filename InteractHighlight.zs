@@ -96,7 +96,9 @@ class LineInteract
     private Array<LineInteract> m_areaGroup;
     private Vector3 m_interactPosition;
     private ui TextureId m_highlight;
+    private ui TextureId m_ring;
     private ui Interpolator m_alpha;
+    private ui Interpolator m_pulse;
 
     private play bool m_canSee;
     private play int m_distanceFromPlayer;
@@ -129,8 +131,11 @@ class LineInteract
 
     ui void UiInitialize()
     {
-        m_highlight = TexMan.CheckForTexture("interact");
+        m_highlight = TexMan.CheckForTexture("ping");
+        m_ring = TexMan.CheckForTexture("pingr");
         m_alpha = new("Interpolator");
+        m_pulse = new("Interpolator");
+        m_pulse.Speed = 0.25f;
     }
 
     play void Tick(PlayerInfo player)
@@ -216,11 +221,26 @@ class LineInteract
 
         m_alpha.Target = m_shouldDraw ? 1.0 : 0.0;
 
+        m_pulse.Target = 100.0f;
+        float pulse = m_pulse.Update(deltaTime);
+
+        if (pulse > 99)
+            m_pulse.Current = 0;
+
         Vector3 ndcPos = worldToClip.multiplyVector3(m_interactPosition);
         float alpha = m_alpha.Update(deltaTime);
-        if (abs(ndcPos.x) <= 1.0 && abs(ndcPos.y) <= 1.0 && abs(ndcPos.z) <= 1.0)
+        if (alpha > 0 && abs(ndcPos.x) <= 1.0 && abs(ndcPos.y) <= 1.0 && abs(ndcPos.z) <= 1.0)
         {
             Vector2 screenPos = YzGlobalMaths.NDCToViewport(ndcPos);
+
+            Screen.DrawTexture(
+                m_ring,
+                false,
+                screenPos.x,
+                screenPos.y,
+                DTA_Alpha, (1 - (pulse / 100.0)) * alpha,
+                DTA_DestWidth, Int(pulse / 2),
+                DTA_DestHeight, Int(pulse / 2));
 
             Screen.DrawTexture(
                 m_highlight,
