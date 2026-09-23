@@ -17,6 +17,7 @@ class InteractHighlight : UiAddOn
 
     override void WorldLoaded(WorldEvent event)
     {
+        m_interacts.Clear();
         let player = players[consolePlayer];
 
         int interactableCount = 0;
@@ -116,8 +117,17 @@ class LineInteract
         m_interactposition.x = pos2d.x;
         m_interactposition.y = pos2d.y;
 
-        m_interactposition.z = line.FrontSector.FloorPlane.ZatPoint(pos2d);
-        m_interactposition.z += 32;
+        int bottom = line.FrontSector.FloorPlane.ZatPoint(pos2d);
+        int top = line.FrontSector.CeilingPlane.ZatPoint(pos2d);
+        int height = top - bottom;
+        if (height < 50)
+        {
+                m_interactposition.z = bottom + (height / 2);
+        }
+        else
+        {
+            m_interactposition.z = bottom + 32;
+        }
     }
 
     void CheckAreaGroup(LineInteract other)
@@ -167,6 +177,9 @@ class LineInteract
 
     play bool CanSee(PlayerInfo player)
     {
+        if (m_line == null)
+            return false;
+
         Vector3 startpos = player.mo.pos;
         startPos.z = player.viewz;
         Vector3 dir = Level.Vec3Diff(startpos, m_interactposition);
