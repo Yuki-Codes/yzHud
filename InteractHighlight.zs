@@ -2,6 +2,11 @@
 
 class InteractHighlight : UiAddOn
 {
+    const MinDistance = 25;
+    const MaxDistance = 1500;
+    const PenetrateThickness = 200;
+    const GroupDistance = 50;
+
     private Array<LineInteract> m_interacts;
     private ui YzProjectionCache m_projectionCache;
 
@@ -23,6 +28,15 @@ class InteractHighlight : UiAddOn
                 LineInteract interact = new("LineInteract");
                 interact.Initialize(line);
                 m_interacts.push(interact);
+            }
+        }
+
+        // group interacts that are close together
+        for (int i = 0; i < m_interacts.Size(); i++)
+        {
+            for (int j = 0; j < m_interacts.Size(); j++)
+            {
+                m_interacts[i].CheckAreaGroup(m_interacts[j]);
             }
         }
     }
@@ -67,6 +81,11 @@ class InteractHighlight : UiAddOn
         {
             m_interacts[i].Tick(self.Player);
         }
+
+        for (int i = 0; i < m_interacts.Size(); i++)
+        {
+            m_interacts[i].TickAreaGroup(self.Player);
+        }
     }
 }
 
@@ -74,12 +93,15 @@ class InteractHighlight : UiAddOn
 class LineInteract
 {
     private Line m_line;
+    private Array<LineInteract> m_areaGroup;
     private Vector3 m_interactPosition;
-    private Vector3 m_hitPosition;
     private ui TextureId m_highlight;
     private ui Interpolator m_alpha;
 
     private play bool m_canSee;
+    private play int m_distanceFromPlayer;
+    private play bool m_isClosestInGroup;
+    private play bool m_shouldDraw;
 
     void Initialize(Line line)
     {
@@ -92,8 +114,17 @@ class LineInteract
         m_interactposition.x = pos2d.x;
         m_interactposition.y = pos2d.y;
 
-        // todo: sector heights?
-        m_interactposition.z = 0;
+        m_interactposition.z = line.FrontSector.FloorPlane.ZatPoint(pos2d);
+        m_interactposition.z += 32;
+    }
+
+    void CheckAreaGroup(LineInteract other)
+    {
+        Vector3 delta = Level.Vec3Diff(m_interactposition, other.m_interactposition);
+        if (delta.Length() < InteractHighlight.GroupDistance)
+        {
+            m_areaGroup.push(other);
+        }
     }
 
     ui void UiInitialize()
@@ -104,9 +135,29 @@ class LineInteract
 
     play void Tick(PlayerInfo player)
     {
-        m_interactposition.z = player.viewz;
-
         m_canSee = CanSee(player);
+    }
+
+    play void TickAreaGroup(PlayerInfo player)
+    {
+        if (!m_canSee)
+        {
+            m_shouldDraw = false;
+            return;
+        }
+
+        LineInteract bestInteract = self;
+        int bestDistance = self.m_distanceFromPlayer;
+        for (int i = 0; i < m_areaGroup.Size(); i++)
+        {
+            if (m_areaGroup[i].m_canSee && m_areaGroup[i].m_distanceFromPlayer < bestDistance)
+            {
+                bestDistance = m_areaGroup[i].m_distanceFromPlayer;
+                bestInteract = m_areaGroup[i];
+            }
+        }
+
+        m_shouldDraw = bestInteract == self;
     }
 
     play bool CanSee(PlayerInfo player)
@@ -114,32 +165,28 @@ class LineInteract
         Vector3 startpos = player.mo.pos;
         startPos.z = player.viewz;
         Vector3 dir = Level.Vec3Diff(startpos, m_interactposition);
-        float distance = dir.Length();
+        m_distanceFromPlayer = dir.Length();
         dir = dir.Unit();
 
-        if (distance < 25 || distance > 1500)
+        if (m_distanceFromPlayer < InteractHighlight.MinDistance || m_distanceFromPlayer > InteractHighlight.MaxDistance)
             return false;
-
-        // Has this sector been seen
-        // subsectors have this flag, not sectors? :think:
-        /*if (!(m_line.FrontSector.Flags & 2))
-        {
-            m_alpha.Target = 0;
-        }*/
 
         // can we see the target line
         FLineTraceData tr;
         bool hit = player.mo.LineTrace(
             atan2(dir.y, dir.x),
-            distance + 100,
+            m_distanceFromPlayer + 100,
             asin(-dir.z),
             offsetz: player.viewz - player.mo.pos.z,
             data: tr);
 
-        m_hitPosition = tr.HitLocation;
-
         if (!hit)
             return false;
+
+        // See through thin walls
+        Vector3 hitOffset = Level.Vec3Diff(tr.HitLocation, m_interactposition);
+        if (hitOffset.Length() < InteractHighlight.PenetrateThickness)
+            return true;
 
         if (tr.HitType == TRACE_HitWall && tr.HitLine == m_line)
             return true;
@@ -160,9 +207,9 @@ class LineInteract
             self.UiInitialize();
         }
 
-        m_alpha.Target = m_canSee ? 1.0 : 0.0;
+        m_alpha.Target = m_shouldDraw ? 1.0 : 0.0;
 
-        Vector3 ndcPos = worldToClip.multiplyVector3(m_hitPosition);
+        Vector3 ndcPos = worldToClip.multiplyVector3(m_interactPosition);
         float alpha = m_alpha.Update(deltaTime);
         if (abs(ndcPos.x) <= 1.0 && abs(ndcPos.y) <= 1.0 && abs(ndcPos.z) <= 1.0)
         {
