@@ -168,10 +168,15 @@ class LineInteract
         m_distanceFromPlayer = dir.Length();
         dir = dir.Unit();
 
+        // within range
         if (m_distanceFromPlayer < InteractHighlight.MinDistance || m_distanceFromPlayer > InteractHighlight.MaxDistance)
             return false;
 
-        // can we see the target line
+        // sector has been seen
+        if (m_line.FrontSector != null && !(m_line.FrontSector.MoreFlags & Sector.SECMF_DRAWN))
+            return false;
+
+        // Line of Sight to the wall
         FLineTraceData tr;
         bool hit = player.mo.LineTrace(
             atan2(dir.y, dir.x),
@@ -188,9 +193,11 @@ class LineInteract
         if (hitOffset.Length() < InteractHighlight.PenetrateThickness)
             return true;
 
+        // seeing the right wall
         if (tr.HitType == TRACE_HitWall && tr.HitLine == m_line)
             return true;
 
+        // seeing the wrong wall
         return false;
     }
 
