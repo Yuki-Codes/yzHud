@@ -13,3 +13,5 @@ version "5.00"
 #include "YZH/UiKeys.zs"
 #include "YZH/UiPowerups.zs"
 #include "YZH/UiPickupEffect.zs"
+
+#include "YZH/Unlock.zs"

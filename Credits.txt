@@ -1,0 +1,21 @@
+Gutamatics - https://gitlab.com/Gutawer/uzdoom-gutamatics
+    Gutawer
+
+NTMAi - https://github.com/localins/NTMAi/
+    Can't Sleep
+    Kinsie
+
+Keycard and Skullkey graphics - https://github.com/localins/NTMAi/tree/master/sprites/weapons/keys
+    Hellfire
+    totallyrealrei
+
+Damage-Numbers-Plus-Plus - https://github.com/Boondorl/Damage-Numbers-Plus-Plus
+    Boondorl
+
+Special thanks to everyone who helped me learn on the ZDoom discord
+    Gutawer
+    Cadence
+    Dithered Output
+    Nash Muhandes
+    Boondorl
+    Vortex
