@@ -1,18 +1,16 @@
-#include "Gutamatics/Include.zsc"
-
-class InteractHighlight : UiAddOn
+class YZH_UiInteractHighlight : YZH_UiAddOnBase
 {
     const MinDistance = 25;
     const MaxDistance = 1500;
-    const PenetrateThickness = 200;
+    const PenetrateThickness = 50;
     const GroupDistance = 50;
 
-    private Array<LineInteract> m_interacts;
-    private ui YzProjectionCache m_projectionCache;
+    private Array<YZH_LineInteract> m_interacts;
+    private ui YZG_ProjectionCache m_projectionCache;
 
     override void Initialize()
     {
-        m_projectionCache = new("YzProjectionCache");
+        m_projectionCache = new("YZG_ProjectionCache");
     }
 
     override void WorldLoaded(WorldEvent event)
@@ -26,7 +24,7 @@ class InteractHighlight : UiAddOn
             Line line = Level.Lines[i];
             if (line.activation == SPAC_Use || line.activation == SPAC_UseThrough)
             {
-                LineInteract interact = new("LineInteract");
+                YZH_LineInteract interact = new("YZH_LineInteract");
                 interact.Initialize(line);
                 m_interacts.push(interact);
             }
@@ -91,15 +89,15 @@ class InteractHighlight : UiAddOn
 }
 
 
-class LineInteract
+class YZH_LineInteract
 {
     private Line m_line;
-    private Array<LineInteract> m_areaGroup;
+    private Array<YZH_LineInteract> m_areaGroup;
     private Vector3 m_interactPosition;
     private ui TextureId m_highlight;
     private ui TextureId m_ring;
-    private ui Interpolator m_alpha;
-    private ui Interpolator m_pulse;
+    private ui YZH_Interpolator m_alpha;
+    private ui YZH_Interpolator m_pulse;
 
     private play bool m_canSee;
     private play int m_distanceFromPlayer;
@@ -130,10 +128,10 @@ class LineInteract
         }
     }
 
-    void CheckAreaGroup(LineInteract other)
+    void CheckAreaGroup(YZH_LineInteract other)
     {
         Vector3 delta = Level.Vec3Diff(m_interactposition, other.m_interactposition);
-        if (delta.Length() < InteractHighlight.GroupDistance)
+        if (delta.Length() < YZH_UiInteractHighlight.GroupDistance)
         {
             m_areaGroup.push(other);
         }
@@ -143,8 +141,8 @@ class LineInteract
     {
         m_highlight = TexMan.CheckForTexture("ping");
         m_ring = TexMan.CheckForTexture("pingr");
-        m_alpha = new("Interpolator");
-        m_pulse = new("Interpolator");
+        m_alpha = new("YZH_Interpolator");
+        m_pulse = new("YZH_Interpolator");
         m_pulse.Speed = 0.25f;
     }
 
@@ -161,7 +159,7 @@ class LineInteract
             return;
         }
 
-        LineInteract bestInteract = self;
+        YZH_LineInteract bestInteract = self;
         int bestDistance = self.m_distanceFromPlayer;
         for (int i = 0; i < m_areaGroup.Size(); i++)
         {
@@ -187,7 +185,7 @@ class LineInteract
         dir = dir.Unit();
 
         // within range
-        if (m_distanceFromPlayer < InteractHighlight.MinDistance || m_distanceFromPlayer > InteractHighlight.MaxDistance)
+        if (m_distanceFromPlayer < YZH_UiInteractHighlight.MinDistance || m_distanceFromPlayer > YZH_UiInteractHighlight.MaxDistance)
             return false;
 
         // sector has been seen
@@ -208,7 +206,7 @@ class LineInteract
 
         // See through thin walls
         Vector3 hitOffset = Level.Vec3Diff(tr.HitLocation, m_interactposition);
-        if (hitOffset.Length() < InteractHighlight.PenetrateThickness)
+        if (hitOffset.Length() < YZH_UiInteractHighlight.PenetrateThickness)
             return true;
 
         // seeing the right wall
@@ -219,7 +217,7 @@ class LineInteract
         return false;
     }
 
-    ui void Draw(PlayerInfo player, Vector3 viewPos, YzMatrix4 worldToClip, float deltaTime)
+    ui void Draw(PlayerInfo player, Vector3 viewPos, YZG_Matrix4 worldToClip, float deltaTime)
     {
         if (m_line == null)
             return;
@@ -244,7 +242,7 @@ class LineInteract
         float alpha = m_alpha.Update(deltaTime);
         if (alpha > 0 && abs(ndcPos.x) <= 1.0 && abs(ndcPos.y) <= 1.0 && abs(ndcPos.z) <= 1.0)
         {
-            Vector2 screenPos = YzGlobalMaths.NDCToViewport(ndcPos);
+            Vector2 screenPos = YZG_GlobalMaths.NDCToViewport(ndcPos);
 
             Screen.DrawTexture(
                 m_ring,

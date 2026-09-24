@@ -1,7 +1,6 @@
-class PickupView : UiAddOn
+class YZH_UiPickupEffect : YZH_UiAddOnBase
 {
-    Array<PickupEntry> m_entries;
-    private bool m_needsRehook;
+    Array<YZH_PickupEntry> m_entries;
 
     private ui int m_lastPickupOffset;
     static const int PickupOffsets[] =
@@ -18,13 +17,14 @@ class PickupView : UiAddOn
         return PickupOffsets[m_lastPickupOffset];
     }
 
-    override void WorldLoaded(WorldEvent event)
-	{
-        m_needsRehook = true;
-
-        Actor player = players[consolePlayer].mo;
-        player.TakeInventory("PickupViewHookItem", int.max);
-	}
+    override void WorldThingDestroyed(WorldEvent event)
+    {
+        Inventory item = Inventory(event.Thing);
+        if (item)
+        {
+            OnItemPickup(item);
+        }
+    }
 
     override void RenderUnderlay(RenderEvent event)
     {
@@ -51,9 +51,7 @@ class PickupView : UiAddOn
 
     void OnItemPickup(Inventory item)
     {
-        m_needsRehook = true;
-
-        PickupEntry entry = new("PickupEntry");
+        YZH_PickupEntry entry = new("YZH_PickupEntry");
         entry.Item = item;
         entry.Icon = item.SpawnState.GetSpriteTexture(0);
         entry.Type = item.GetClass();
@@ -61,49 +59,7 @@ class PickupView : UiAddOn
     }
 }
 
-class PickupViewHookItem : Inventory
-{
-    PickupView AddOn;
-
-	Default
-	{
-		inventory.maxamount 1;
-		+INVENTORY.UNDROPPABLE
-		+INVENTORY.UNTOSSABLE
-		+INVENTORY.PERSISTENTPOWER
-	}
-
-	override bool HandlePickup(Inventory item)
-	{
-        // will this item actually get collected?
-        for (let probe = Owner.Inv; probe != NULL; probe = probe.Inv)
-        {
-            Inventory otherItem = probe;
-
-            if (otherItem.GetClass() == item.GetClass())
-            {
-                if (otherItem.Amount >= otherItem.MaxAmount - 1 && !sv_unlimited_pickup)
-                {
-                    return false;
-                }
-            }
-
-            Ammo ammoitem = Ammo(otherItem);
-            if (ammoitem && ammoitem.GetParentAmmo() == ammoitem.GetClass())
-            {
-                if (ammoitem.Amount >= ammoitem.MaxAmount && sv_unlimited_pickup)
-                {
-                    return false;
-                }
-            }
-        }
-
-        self.AddOn.OnItemPickup(item);
-		return super.HandlePickup(item);
-	}
-}
-
-class PickupEntry
+class YZH_PickupEntry
 {
     TextureId Icon;
     class<Inventory> Type;
@@ -112,38 +68,52 @@ class PickupEntry
     bool IsDone;
 
     private ui bool m_isInitialized;
-    private Interpolator m_positionX;
-    private Interpolator m_positionY;
-    private Interpolator m_scale;
+    private YZH_Interpolator m_positionX;
+    private YZH_Interpolator m_positionY;
+    private YZH_Interpolator m_scale;
+    private YZH_Interpolator m_alpha;
 
-    ui void Draw(PickupView addOn, float deltaTime)
+    ui void Draw(YZH_UiPickupEffect addOn, float deltaTime)
     {
         if (!m_isInitialized)
         {
-            m_positionY = new("Interpolator");
+            m_positionY = new("YZH_Interpolator");
             m_positionY.Current = addOn.GetHeight() - 200;
             m_positionY.Target = addOn.GetHeight();
             m_positionY.Speed = 0.5;
 
-            m_positionX = new("Interpolator");
+            m_positionX = new("YZH_Interpolator");
             m_positionX.Current = (addOn.GetWidth() / 2) + addOn.GetNextOffset();
             m_positionX.Target = addOn.GetWidth() / 2;
             m_positionX.Speed = 0.5;
 
-            m_scale = new("Interpolator");
+            m_scale = new("YZH_Interpolator");
             m_scale.Current = 4;
             m_scale.Target = 2;
             m_scale.Speed = 0.5;
 
+            m_alpha = new("YZH_Interpolator");
+            m_alpha.Current = 1;
+            m_alpha.Target = 0;
+            m_alpha.Speed = 2;
+
             m_isInitialized = true;
         }
 
+        m_positionX.Update(deltaTime);
+        m_positionY.Update(deltaTime);
+        m_scale.Update(deltaTime);
+
+        if (m_positionY.Current > addOn.GetHeight() - 64)
+            m_alpha.Update(deltaTime);
+
         addOn.DrawTexture(
             self.Icon,
-            m_positionX.Update(deltaTime),
-            m_positionY.Update(deltaTime),
-            scale:m_scale.Update(deltaTime),
-            anchor: (0.5, 0));
+            m_positionX.Current,
+            m_positionY.Current,
+            scale:m_scale.Current,
+            anchor: (0.5, 0),
+            alpha: m_alpha.Current);
 
         if (m_positionY.Current >= m_positionY.Target)
         {

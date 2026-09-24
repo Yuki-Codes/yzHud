@@ -1,26 +1,23 @@
-#include "UiAddOn.zs"
-#include "Interpolator.zs"
-
-class WeaponsList : UiAddOn
+class YZH_UiWeaponsList : YZH_UiAddOnBase
 {
-    private ui Array<WeaponSlot> m_weaponSlots;
+    private ui Array<YZH_WeaponSlot> m_weaponSlots;
     private ui int m_previewWeaponNumber;
     private ui String m_previewWeaponType;
     private ui int m_selectingWeaponNumber;
-    private ui Interpolator m_selectionScrollOffset;
+    private ui YZH_Interpolator m_selectionScrollOffset;
     private ui bool m_isOpen;
 
     override void Initialize()
     {
         m_isOpen = false;
         m_previewWeaponNumber = 0;
-        m_selectionScrollOffset = new("Interpolator");
+        m_selectionScrollOffset = new("YZH_Interpolator");
         m_selectionScrollOffset.Speed = 3.0f;
 
         // Create all slots
         for (int i = 0; i <= 10; i++)
         {
-            WeaponSlot slot = new("WeaponSlot");
+            YZH_WeaponSlot slot = new("YZH_WeaponSlot");
             slot.Index = i;
             m_weaponSlots.Push(slot);
         }
@@ -42,7 +39,7 @@ class WeaponsList : UiAddOn
             if (!located)
                 continue;
 
-            WeaponInfo newInfo = new("WeaponInfo");
+            YZH_WeaponInfo newInfo = new("YZH_WeaponInfo");
             newInfo.Slot = slot;
             newInfo.Priority = priority;
             newInfo.Type = weaponType;
@@ -52,7 +49,7 @@ class WeaponsList : UiAddOn
             bool inserted = false;
             for (int i = 0; i < numWeaponsInSlot; i++)
             {
-                WeaponInfo otherInfo = m_weaponSlots[slot].WeaponTypes[i];
+                YZH_WeaponInfo otherInfo = m_weaponSlots[slot].WeaponTypes[i];
                 if (otherInfo.Priority < newInfo.Priority)
                 {
                     m_weaponSlots[slot].WeaponTypes.Insert(i, newInfo);
@@ -77,7 +74,7 @@ class WeaponsList : UiAddOn
         Array<string> parts;
         event.Name.split(parts, ":");
 
-        if (parts[0] == "yzHud")
+        if (parts[0] == "YZH")
         {
             if (parts[1] == "SelectWeapon")
             {
@@ -129,7 +126,7 @@ class WeaponsList : UiAddOn
                 m_selectingWeaponNumber = m_previewWeaponNumber;
                 m_isOpen = false;
 
-                EventHandler.SendNetworkEvent(string.format("yzHud:SelectWeapon:%s", m_previewWeaponType));
+                EventHandler.SendNetworkEvent(string.format("YZH:SelectWeapon:%s", m_previewWeaponType));
 
                 return true;
             }
@@ -146,11 +143,11 @@ class WeaponsList : UiAddOn
     private ui void PreviewWeaponSlot(int slotIndex)
     {
         // Get all the valid weapons in this slot
-        WeaponSlot slot = m_weaponSlots[slotIndex];
-        Array<WeaponInfo> validWeapons;
+        YZH_WeaponSlot slot = m_weaponSlots[slotIndex];
+        Array<YZH_WeaponInfo> validWeapons;
         for (int i = 0; i < slot.WeaponTypes.Size(); i++)
         {
-            WeaponInfo info = slot.WeaponTypes[i];
+            YZH_WeaponInfo info = slot.WeaponTypes[i];
             if (info.IsValid(self.Player))
             {
                 validWeapons.push(info);
@@ -165,7 +162,7 @@ class WeaponsList : UiAddOn
         int previewIndex = -1;
         for (int i = 0; i < validWeapons.Size(); i++)
         {
-            WeaponInfo info = validWeapons[i];
+            YZH_WeaponInfo info = validWeapons[i];
             if (info.WeaponNumber == m_previewWeaponNumber)
             {
                 previewIndex = i;
@@ -204,11 +201,11 @@ class WeaponsList : UiAddOn
         int totalWeapons = 0;
         for (int i = 0; i < 10; i++)
         {
-            WeaponSlot slot = m_weaponSlots[i];
+            YZH_WeaponSlot slot = m_weaponSlots[i];
 
             for (int j = 0; j < slot.WeaponTypes.Size(); j++)
             {
-                WeaponInfo info = slot.WeaponTypes[j];
+                YZH_WeaponInfo info = slot.WeaponTypes[j];
 
                 if (info.IsValid(player))
                 {
@@ -232,11 +229,11 @@ class WeaponsList : UiAddOn
 
         for (int i = 0; i < 10; i++)
         {
-            WeaponSlot slot = m_weaponSlots[i];
+            YZH_WeaponSlot slot = m_weaponSlots[i];
 
             for (int i = 0; i < slot.WeaponTypes.Size(); i++)
             {
-                WeaponInfo info = slot.WeaponTypes[i];
+                YZH_WeaponInfo info = slot.WeaponTypes[i];
 
                 if (!info.Instance)
                     continue;
@@ -261,13 +258,13 @@ class WeaponsList : UiAddOn
     }
 }
 
-class WeaponSlot
+class YZH_WeaponSlot
 {
-    Array<WeaponInfo> WeaponTypes;
+    Array<YZH_WeaponInfo> WeaponTypes;
     int Index;
 }
 
-class WeaponInfo
+class YZH_WeaponInfo
 {
     class<Weapon> Type;
     int Slot;
@@ -280,23 +277,23 @@ class WeaponInfo
     private ui TextureId m_weaponBoxTextureId;
     private ui Font m_font;
 
-    private ui Interpolator m_offset;
-    private ui Interpolator m_boxAlpha;
-    private ui Interpolator m_iconAlpha;
-    private ui Interpolator m_textAlpha;
+    private ui YZH_Interpolator m_offset;
+    private ui YZH_Interpolator m_boxAlpha;
+    private ui YZH_Interpolator m_iconAlpha;
+    private ui YZH_Interpolator m_textAlpha;
 
     ui void Init()
     {
         m_font = Font.FindFont('SmallFont');
         m_weaponBoxTextureId = TexMan.CheckForTexture("wpnbox");
 
-        m_offset = new ("Interpolator");
+        m_offset = new ("YZH_Interpolator");
         m_offset.Speed = 3.0f;
-        m_boxAlpha = new ("Interpolator");
+        m_boxAlpha = new ("YZH_Interpolator");
         m_boxAlpha.Speed = 3.0f;
-        m_iconAlpha = new ("Interpolator");
+        m_iconAlpha = new ("YZH_Interpolator");
         m_iconAlpha.Speed = 3.0f;
-        m_textAlpha = new ("Interpolator");
+        m_textAlpha = new ("YZH_Interpolator");
         m_textAlpha.Speed = 3.0f;
 
         self.Name = self.Instance.getTag();
@@ -319,7 +316,7 @@ class WeaponInfo
     }
 
     ui void Draw(
-        WeaponsList list,
+        YZH_UiWeaponsList list,
         bool isPreview,
         bool isHidden,
         bool isSelected,

@@ -1,15 +1,15 @@
-class yzProjectionCache {
-	yzMatrix4 view;
-	yzMatrix4 invView;
+class YZG_ProjectionCache {
+	YZG_Matrix4 view;
+	YZG_Matrix4 invView;
 
-	yzMatrix4 proj;
-	yzMatrix4 invProj;
+	YZG_Matrix4 proj;
+	YZG_Matrix4 invProj;
 
-	yzMatrix4 postProj;
-	yzMatrix4 invPostProj;
+	YZG_Matrix4 postProj;
+	YZG_Matrix4 invPostProj;
 
-	yzMatrix4 worldToClip;
-	yzMatrix4 clipToWorld;
+	YZG_Matrix4 worldToClip;
+	YZG_Matrix4 clipToWorld;
 
 	private double prevAspect;
 	private double prevFov;
@@ -28,13 +28,13 @@ class yzProjectionCache {
 		bool planar = false
 	) {
 		if (!self.doneOnce) {
-			self.postProj = yzMatrix4.identity();
-			self.invPostProj = yzMatrix4.identity();
+			self.postProj = YZG_Matrix4.identity();
+			self.invPostProj = YZG_Matrix4.identity();
 		}
 		if (!self.doneOnce || aspect != self.prevAspect || fov != self.prevFov) {
-			double fovy = yzGlobalMaths.fovHToY(fov, aspect);
+			double fovy = YZG_GlobalMaths.fovHToY(fov, aspect);
 			// 5 & 65535 are what are used internally, so they're used here for consistency
-			self.proj = yzMatrix4.perspective(fovy, aspect, 5.0, 65535.0);
+			self.proj = YZG_Matrix4.perspective(fovy, aspect, 5.0, 65535.0);
 			self.invProj = self.proj.inverse();
 			self.planarYShiftMul = 1.0 / tan(fovy / 2.0);
 		}
@@ -43,13 +43,13 @@ class yzProjectionCache {
 			self.postProj.values[1][3] = planarYShift;
 			self.invPostProj.values[1][3] = -planarYShift;
 
-			[self.view, self.invView] = yzMatrix4.view(viewPos, yaw, 0.0, 0.0);
+			[self.view, self.invView] = YZG_Matrix4.view(viewPos, yaw, 0.0, 0.0);
 			self.worldToClip = postProj.multiplyMatrix(self.proj).multiplyMatrix(self.view);
 			self.clipToWorld = self.invView.multiplyMatrix(self.invProj).multiplyMatrix(invPostProj);
 		} else {
 			self.postProj.values[1][3] = 0.0;
 			self.invPostProj.values[1][3] = 0.0;
-			[self.view, self.invView] = yzMatrix4.view(viewPos, yaw, pitch, roll);
+			[self.view, self.invView] = YZG_Matrix4.view(viewPos, yaw, pitch, roll);
 			self.worldToClip = self.proj.multiplyMatrix(self.view);
 			self.clipToWorld = self.invView.multiplyMatrix(self.invProj);
 		}
@@ -59,20 +59,20 @@ class yzProjectionCache {
 	}
 }
 
-class yzMatrix4 {
+class YZG_Matrix4 {
 	const ROWS = 4;
 	const COLUMNS = 4;
 
 	double values[ROWS][COLUMNS];
 
 	/// Initialises a new Matrix4 in a static context.
-	static yzMatrix4 create() {
-		return new("yzMatrix4");
+	static YZG_Matrix4 create() {
+		return new("YZG_Matrix4");
 	}
 
 	/// Returns an identity matrix.
-	static yzMatrix4 identity() {
-		let ret = yzMatrix4.create();
+	static YZG_Matrix4 identity() {
+		let ret = YZG_Matrix4.create();
 		ret.values[0][0] = 1;
 		ret.values[1][1] = 1;
 		ret.values[2][2] = 1;
@@ -81,8 +81,8 @@ class yzMatrix4 {
 	}
 
 	/// Returns a rotation matrix from euler angles.
-	static yzMatrix4 fromEulerAngles(double yaw, double pitch, double roll) {
-		yzMatrix4 rYaw = yzMatrix4.identity();
+	static YZG_Matrix4 fromEulerAngles(double yaw, double pitch, double roll) {
+		YZG_Matrix4 rYaw = YZG_Matrix4.identity();
 		double sYaw = sin(yaw);
 		double cYaw = cos(yaw);
 		rYaw.values[0][0] = cYaw;
@@ -90,7 +90,7 @@ class yzMatrix4 {
 		rYaw.values[1][0] = sYaw;
 		rYaw.values[1][1] = cYaw;
 
-		yzMatrix4 rPitch = yzMatrix4.identity();
+		YZG_Matrix4 rPitch = YZG_Matrix4.identity();
 		double sPitch = sin(pitch);
 		double cPitch = cos(pitch);
 		rPitch.values[0][0] = cPitch;
@@ -98,7 +98,7 @@ class yzMatrix4 {
 		rPitch.values[0][2] = sPitch;
 		rPitch.values[2][2] = cPitch;
 
-		yzMatrix4 rRoll = yzMatrix4.identity();
+		YZG_Matrix4 rRoll = YZG_Matrix4.identity();
 		double sRoll = sin(roll);
 		double cRoll = cos(roll);
 		rRoll.values[1][1] = cRoll;
@@ -107,14 +107,14 @@ class yzMatrix4 {
 		rRoll.values[2][2] = cRoll;
 
 		// concatenate ypr to get the final matrix
-		yzMatrix4 ret = rYaw.multiplyMatrix(rPitch);
+		YZG_Matrix4 ret = rYaw.multiplyMatrix(rPitch);
 		ret = ret.multiplyMatrix(rRoll);
 		return ret;
 	}
 
 	/// Returns a rotation matrix from an axis and an angle.
-	static yzMatrix4 fromAxisAngle(Vector3 axis, double angle) {
-		yzMatrix4 ret = yzMatrix4.identity();
+	static YZG_Matrix4 fromAxisAngle(Vector3 axis, double angle) {
+		YZG_Matrix4 ret = YZG_Matrix4.identity();
 		double c = cos(angle);
 		double s = sin(angle);
 		double x = axis.x;
@@ -136,13 +136,13 @@ class yzMatrix4 {
 
 	/// Converts back from the rotation matrix to euler angles.
 	double, double, double rotationToEulerAngles() {
-		if (yzGlobalMaths.closeEnough(values[2][0], -1)) {
+		if (YZG_GlobalMaths.closeEnough(values[2][0], -1)) {
 			double x = 90;
 			double y = 0;
 			double z = atan2(values[0][1], values[0][2]);
 			return z, x, y;
 		}
-		else if (yzGlobalMaths.closeEnough(values[2][0], 1)) {
+		else if (YZG_GlobalMaths.closeEnough(values[2][0], 1)) {
 			double x = -90;
 			double y = 0;
 			double z = atan2(-values[0][1], -values[0][2]);
@@ -167,44 +167,44 @@ class yzMatrix4 {
 		}
 	}
 
-	static yzMatrix4 createTRSEuler(Vector3 translate, double yaw, double pitch, double roll, Vector3 scale) {
-		yzMatrix4 translateMat = yzMatrix4.identity();
+	static YZG_Matrix4 createTRSEuler(Vector3 translate, double yaw, double pitch, double roll, Vector3 scale) {
+		YZG_Matrix4 translateMat = YZG_Matrix4.identity();
 		translateMat.values[0][3] = translate.x;
 		translateMat.values[1][3] = translate.y;
 		translateMat.values[2][3] = translate.z;
 
-		yzMatrix4 rotateMat = yzMatrix4.fromEulerAngles(yaw, pitch, roll);
+		YZG_Matrix4 rotateMat = YZG_Matrix4.fromEulerAngles(yaw, pitch, roll);
 
-		yzMatrix4 scaleMat = yzMatrix4.identity();
+		YZG_Matrix4 scaleMat = YZG_Matrix4.identity();
 		scaleMat.values[0][0] = scale.x;
 		scaleMat.values[1][1] = scale.y;
 		scaleMat.values[2][2] = scale.z;
 
-		yzMatrix4 ret = translateMat.multiplyMatrix(rotateMat);
+		YZG_Matrix4 ret = translateMat.multiplyMatrix(rotateMat);
 		ret = ret.multiplyMatrix(scaleMat);
 		return ret;
 	}
 
-	static yzMatrix4 createTRSAxisAngle(Vector3 translate, Vector3 axis, double angle, Vector3 scale) {
-		yzMatrix4 translateMat = yzMatrix4.identity();
+	static YZG_Matrix4 createTRSAxisAngle(Vector3 translate, Vector3 axis, double angle, Vector3 scale) {
+		YZG_Matrix4 translateMat = YZG_Matrix4.identity();
 		translateMat.values[0][3] = translate.x;
 		translateMat.values[1][3] = translate.y;
 		translateMat.values[2][3] = translate.z;
 
-		yzMatrix4 rotateMat = yzMatrix4.fromAxisAngle(axis, angle);
+		YZG_Matrix4 rotateMat = YZG_Matrix4.fromAxisAngle(axis, angle);
 
-		yzMatrix4 scaleMat = yzMatrix4.identity();
+		YZG_Matrix4 scaleMat = YZG_Matrix4.identity();
 		scaleMat.values[0][0] = scale.x;
 		scaleMat.values[1][1] = scale.y;
 		scaleMat.values[2][2] = scale.z;
 
-		yzMatrix4 ret = translateMat.multiplyMatrix(rotateMat);
+		YZG_Matrix4 ret = translateMat.multiplyMatrix(rotateMat);
 		ret = ret.multiplyMatrix(scaleMat);
 		return ret;
 	}
 
 	/// Returns a view matrix, and its inverse.
-	static yzMatrix4, yzMatrix4 view(Vector3 camPos, double yaw, double pitch, double roll) {
+	static YZG_Matrix4, YZG_Matrix4 view(Vector3 camPos, double yaw, double pitch, double roll) {
 		// all of this is basically lifted and converted from PolyRenderer::SetupPerspectiveMatrix(),
 		// so credit goes to Graf Zahl/dpJudas/whoever else
 		// (well, that class doesn't exist anymore, and the code here is quite
@@ -225,7 +225,7 @@ class yzMatrix4 {
 		let cy = cos(adjustedYaw);
 		let sy = sin(adjustedYaw);
 
-		let rot = yzMatrix4.create();
+		let rot = YZG_Matrix4.create();
 		rot.values[0][0] = cz * cy - sz * sx * sy;
 		rot.values[0][2] = -sz * cx;
 		rot.values[0][1] = -(cz * sy + sz * sx * cy);
@@ -240,7 +240,7 @@ class yzMatrix4 {
 
 		rot.values[3][3] = 1.0;
 
-		yzMatrix4 ret = rot.clone();
+		YZG_Matrix4 ret = rot.clone();
 		ret.values[0][2] *= pixelRatio;
 		ret.values[1][2] *= pixelRatio;
 		ret.values[2][2] *= pixelRatio;
@@ -249,7 +249,7 @@ class yzMatrix4 {
 		ret.values[1][3] = translate.y;
 		ret.values[2][3] = translate.z;
 
-		yzMatrix4 invRet = rot.transpose();
+		YZG_Matrix4 invRet = rot.transpose();
 		let invRatio = 1.0 / pixelRatio;
 		invRet.values[2][0] *= invRatio;
 		invRet.values[2][1] *= invRatio;
@@ -262,8 +262,8 @@ class yzMatrix4 {
 	}
 
 	/// Returns a perspective matrix (same format as gluPerspective).
-	static yzMatrix4 perspective(double fovy, double aspect, double zNear, double zFar) {
-		yzMatrix4 ret = yzMatrix4.create();
+	static YZG_Matrix4 perspective(double fovy, double aspect, double zNear, double zFar) {
+		YZG_Matrix4 ret = YZG_Matrix4.create();
 		double f = 1 / tan(fovy / 2.0);
 		// x coord
 		ret.values[0][0] = f / aspect;
@@ -278,17 +278,17 @@ class yzMatrix4 {
 	}
 
 	/// Returns a world->clip coords matrix from the passed args.
-	static yzMatrix4 worldToClip(Vector3 viewPos, double yaw, double pitch, double roll, double fov, double aspect) {
-		double fovy = yzGlobalMaths.fovHToY(fov, aspect);
-		yzMatrix4 view = yzMatrix4.view(viewPos, yaw, pitch, roll);
+	static YZG_Matrix4 worldToClip(Vector3 viewPos, double yaw, double pitch, double roll, double fov, double aspect) {
+		double fovy = YZG_GlobalMaths.fovHToY(fov, aspect);
+		YZG_Matrix4 view = YZG_Matrix4.view(viewPos, yaw, pitch, roll);
 		// 5 & 65535 are what are used internally, so they're used here for consistency
-		yzMatrix4 perp = yzMatrix4.perspective(fovy, aspect, 5, 65535);
-		yzMatrix4 worldToClip = perp.multiplyMatrix(view);
+		YZG_Matrix4 perp = YZG_Matrix4.perspective(fovy, aspect, 5, 65535);
+		YZG_Matrix4 worldToClip = perp.multiplyMatrix(view);
 		return worldToClip;
 	}
 
-	yzMatrix4 clone() const {
-		let ret = yzMatrix4.create();
+	YZG_Matrix4 clone() const {
+		let ret = YZG_Matrix4.create();
 		for (int r = 0; r < ROWS; r++) {
 			for (int c = 0; c < COLUMNS; c++) {
 				ret.values[r][c] = self.values[r][c];
@@ -297,8 +297,8 @@ class yzMatrix4 {
 		return ret;
 	}
 
-	yzMatrix4 transpose() const {
-		let ret = yzMatrix4.create();
+	YZG_Matrix4 transpose() const {
+		let ret = YZG_Matrix4.create();
 		for (int r = 0; r < ROWS; r++) {
 			for (int c = 0; c < COLUMNS; c++) {
 				ret.values[r][c] = self.values[c][r];
@@ -308,8 +308,8 @@ class yzMatrix4 {
 	}
 
 	/// Adds two matrices and returns the result.
-	yzMatrix4 addMatrix(yzMatrix4 other) const {
-		yzMatrix4 ret = yzMatrix4.create();
+	YZG_Matrix4 addMatrix(YZG_Matrix4 other) const {
+		YZG_Matrix4 ret = YZG_Matrix4.create();
 		ret.values[0][0] = values[0][0] + other.values[0][0];
 		ret.values[0][1] = values[0][1] + other.values[0][1];
 		ret.values[0][2] = values[0][2] + other.values[0][2];
@@ -330,8 +330,8 @@ class yzMatrix4 {
 	}
 
 	/// Multiplies the matrix by a scalar and returns the result.
-	yzMatrix4 multiplyScalar(double scalar) const {
-		yzMatrix4 ret = yzMatrix4.create();
+	YZG_Matrix4 multiplyScalar(double scalar) const {
+		YZG_Matrix4 ret = YZG_Matrix4.create();
 		ret.values[0][0] = values[0][0] * scalar;
 		ret.values[0][1] = values[0][1] * scalar;
 		ret.values[0][2] = values[0][2] * scalar;
@@ -352,8 +352,8 @@ class yzMatrix4 {
 	}
 
 	/// Multiplies two matrices and returns the result.
-	yzMatrix4 multiplyMatrix(yzMatrix4 other) const {
-		yzMatrix4 ret = yzMatrix4.create();
+	YZG_Matrix4 multiplyMatrix(YZG_Matrix4 other) const {
+		YZG_Matrix4 ret = YZG_Matrix4.create();
 		for (int row = 0; row < ROWS; row++) {
 			ret.values[row][0] =
 				values[row][0] * other.values[0][0] +
@@ -383,8 +383,8 @@ class yzMatrix4 {
 	}
 
 	/// Multiplies two matrices and returns the result, implicitly transposing the latter.
-	yzMatrix4 multiplyTranspose(yzMatrix4 other) const {
-		yzMatrix4 ret = yzMatrix4.create();
+	YZG_Matrix4 multiplyTranspose(YZG_Matrix4 other) const {
+		YZG_Matrix4 ret = YZG_Matrix4.create();
 		for (int row = 0; row < ROWS; row++) {
 			ret.values[row][0] =
 				values[row][0] * other.values[0][0] +
@@ -414,8 +414,8 @@ class yzMatrix4 {
 	}
 
 	/// Multiplies this Matrix by a 3D vector.
-	Vector3 multiplyVector3(Vector3 vec, yzVectorType type = yzVector_Position, bool divideW = true) const {
-		let vecW = (type == yzVector_Position) ? 1.0 : 0.0;
+	Vector3 multiplyVector3(Vector3 vec, YZG_VectorType type = YZG_Vector_Position, bool divideW = true) const {
+		let vecW = (type == YZG_Vector_Position) ? 1.0 : 0.0;
 
 		let ret = (
 			values[0][0] * vec.x + values[0][1] * vec.y + values[0][2] * vec.z + values[0][3] * vecW,
@@ -443,10 +443,10 @@ class yzMatrix4 {
 		}
 	}
 
-	yzMatrix4 inverse() const {
+	YZG_Matrix4 inverse() const {
 		let n = ROWS;
 		let lhs = self.clone();
-		let rhs = yzMatrix4.identity();
+		let rhs = YZG_Matrix4.identity();
 		for (int p = 0; p < n; p++) {
 			let largestNum = abs(lhs.values[p][p]);
 			let largestRow = p;
@@ -486,7 +486,7 @@ class yzMatrix4 {
 		let scientific = false;
 		for (let i = 0; i < ROWS * COLUMNS; i++) {
 			let val = self.values[i / COLUMNS][i % COLUMNS];
-			scientific |= (abs(yzGlobalMaths.getDoubleExponent(val)) > 4);
+			scientific |= (abs(YZG_GlobalMaths.getDoubleExponent(val)) > 4);
 			if (scientific) {
 				break;
 			}

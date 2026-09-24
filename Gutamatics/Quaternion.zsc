@@ -1,8 +1,8 @@
-class yzQuaternion {
+class YZG_Quaternion {
 	double w, x, y, z;
 
 	/// Initialises the Quaternion.
-	yzQuaternion init(double w, double x, double y, double z) {
+	YZG_Quaternion init(double w, double x, double y, double z) {
 		self.w = w;
 		self.x = x;
 		self.y = y;
@@ -12,15 +12,15 @@ class yzQuaternion {
 	}
 
 	/// Initialises the Quaternion in a static context.
-	static yzQuaternion create(double w, double x, double y, double z) {
-		return new("yzQuaternion").init(w, x, y, z);
+	static YZG_Quaternion create(double w, double x, double y, double z) {
+		return new("YZG_Quaternion").init(w, x, y, z);
 	}
 
 	/// Sets up the quaternion using axis and angle.
 	void setAxisAngle(Vector3 axis, double angle) {
 		double lengthSquared = axis dot axis;
 		// avoid a division by 0 and just return the identity
-		if (yzGlobalMaths.closeEnough(lengthSquared, 0)) {
+		if (YZG_GlobalMaths.closeEnough(lengthSquared, 0)) {
 			init(1, 0, 0, 0);
 			return;
 		}
@@ -38,97 +38,97 @@ class yzQuaternion {
 	}
 
 	/// Initialises the Quaternion using axis and angle.
-	yzQuaternion initFromAxisAngle(Vector3 axis, double angle) {
+	YZG_Quaternion initFromAxisAngle(Vector3 axis, double angle) {
 		setAxisAngle(axis, angle);
 		return self;
 	}
 
 	/// Initialises the Quaternion using axis and angle in a static context.
-	static yzQuaternion createFromAxisAngle(Vector3 axis, double angle) {
-		return new("yzQuaternion").initFromAxisAngle(axis, angle);
+	static YZG_Quaternion createFromAxisAngle(Vector3 axis, double angle) {
+		return new("YZG_Quaternion").initFromAxisAngle(axis, angle);
 	}
 
 	/// Sets up the quaternion using euler angles.
 	void setAngles(double yaw, double pitch, double roll) {
-		yzQuaternion zRotation = new("yzQuaternion").initFromAxisAngle((0, 0, 1), yaw);
-		yzQuaternion yRotation = new("yzQuaternion").initFromAxisAngle((0, 1, 0), pitch);
-		yzQuaternion xRotation = new("yzQuaternion").initFromAxisAngle((1, 0, 0), roll);
-		yzQuaternion finalRotation = zRotation.multiplyQuat(yRotation);
+		YZG_Quaternion zRotation = new("YZG_Quaternion").initFromAxisAngle((0, 0, 1), yaw);
+		YZG_Quaternion yRotation = new("YZG_Quaternion").initFromAxisAngle((0, 1, 0), pitch);
+		YZG_Quaternion xRotation = new("YZG_Quaternion").initFromAxisAngle((1, 0, 0), roll);
+		YZG_Quaternion finalRotation = zRotation.multiplyQuat(yRotation);
 		finalRotation = finalRotation.multiplyQuat(xRotation);
 		copy(finalRotation);
 	}
 
 	/// Initialises the quaternion using euler angles.
-	yzQuaternion initFromAngles(double yaw, double pitch, double roll) {
+	YZG_Quaternion initFromAngles(double yaw, double pitch, double roll) {
 		setAngles(yaw, pitch, roll);
 		return self;
 	}
 
 	/// Initialises the quaternion using euler angles in a static context.
-	static yzQuaternion createFromAngles(double yaw, double pitch, double roll) {
-		return new("yzQuaternion").initFromAngles(yaw, pitch, roll);
+	static YZG_Quaternion createFromAngles(double yaw, double pitch, double roll) {
+		return new("YZG_Quaternion").initFromAngles(yaw, pitch, roll);
 	}
 
 	/// Returns the conjugate of the Quaternion.
-	yzQuaternion conjugate() const {
-		return new("yzQuaternion").init(w, -x, -y, -z);
+	YZG_Quaternion conjugate() const {
+		return new("YZG_Quaternion").init(w, -x, -y, -z);
 	}
 
 	/// Returns the normalised form of the Quaternion.
-	yzQuaternion unit() const {
+	YZG_Quaternion unit() const {
 		double lengthSquared = w * w + x * x + y * y + z * z;
-		if (yzGlobalMaths.closeEnough(lengthSquared, 0)) {
+		if (YZG_GlobalMaths.closeEnough(lengthSquared, 0)) {
 			return zero();
 		}
 		double factor = 1 / sqrt(lengthSquared);
-		return new("yzQuaternion").init(w * factor, x * factor, y * factor, z * factor);
+		return new("YZG_Quaternion").init(w * factor, x * factor, y * factor, z * factor);
 	}
 
 	/// Returns the inverse of the Quaternion (equal to conjugate if normalised).
-	yzQuaternion inverse() {
+	YZG_Quaternion inverse() {
 		double norm = w * w + x * x + y * y + z * z;
 		// if this is a zero quaternion, just return self
-		if (yzGlobalMaths.closeEnough(norm, 0)) {
+		if (YZG_GlobalMaths.closeEnough(norm, 0)) {
 			return self;
 		}
 		double inverseNorm = 1/norm;
-		return new("yzQuaternion").init(w * inverseNorm, x * -inverseNorm, y * -inverseNorm, z * -inverseNorm);
+		return new("YZG_Quaternion").init(w * inverseNorm, x * -inverseNorm, y * -inverseNorm, z * -inverseNorm);
 	}
 
 	/// Adds two Quaternions, returning the result.
-	yzQuaternion add(yzQuaternion other) const {
-		return new("yzQuaternion").init(w + other.w, x + other.x, y + other.y, z + other.z);
+	YZG_Quaternion add(YZG_Quaternion other) const {
+		return new("YZG_Quaternion").init(w + other.w, x + other.x, y + other.y, z + other.z);
 	}
 
 	/// Subtracts two Quaternions, returning the result.
-	yzQuaternion subtract(yzQuaternion other) const {
-		return new("yzQuaternion").init(w - other.w, x - other.x, y - other.y, z - other.z);
+	YZG_Quaternion subtract(YZG_Quaternion other) const {
+		return new("YZG_Quaternion").init(w - other.w, x - other.x, y - other.y, z - other.z);
 	}
 
 	/// Multiplies the Quaternion by a scalar, returning the result.
-	yzQuaternion multiplyScalar(double scalar) const {
-		return new("yzQuaternion").init(w * scalar, x * scalar, y * scalar, z * scalar);
+	YZG_Quaternion multiplyScalar(double scalar) const {
+		return new("YZG_Quaternion").init(w * scalar, x * scalar, y * scalar, z * scalar);
 	}
 
 	/// Multiplies two Quaternions, returning the result.
-	yzQuaternion multiplyQuat(yzQuaternion other) const {
-		return new("yzQuaternion").init(w * other.w - x * other.x - y * other.y - z * other.z,
+	YZG_Quaternion multiplyQuat(YZG_Quaternion other) const {
+		return new("YZG_Quaternion").init(w * other.w - x * other.x - y * other.y - z * other.z,
 		                                   w * other.x + x * other.w + y * other.z - z * other.y,
 		                                   w * other.y + y * other.w + z * other.x - x * other.z,
 		                                   w * other.z + z * other.w + x * other.y - y * other.x );
 	}
 
 	/// Negates the Quaternion.
-	yzQuaternion negate() const {
-		return new("yzQuaternion").init(-w, -x, -y, -z);
+	YZG_Quaternion negate() const {
+		return new("YZG_Quaternion").init(-w, -x, -y, -z);
 	}
 
 	/// Sets the values to 0 if they're close enough to 0.
 	void clean() {
-		if (yzGlobalMaths.closeEnough(w, 0)) w = 0;
-		if (yzGlobalMaths.closeEnough(x, 0)) x = 0;
-		if (yzGlobalMaths.closeEnough(y, 0)) y = 0;
-		if (yzGlobalMaths.closeEnough(z, 0)) z = 0;
+		if (YZG_GlobalMaths.closeEnough(w, 0)) w = 0;
+		if (YZG_GlobalMaths.closeEnough(x, 0)) x = 0;
+		if (YZG_GlobalMaths.closeEnough(y, 0)) y = 0;
+		if (YZG_GlobalMaths.closeEnough(z, 0)) z = 0;
 	}
 
 	/// Returns the length of the Quaternion squared.
@@ -142,34 +142,34 @@ class yzQuaternion {
 	}
 
 	/// Returns whether the two Quaternions are equal.
-	bool equals(yzQuaternion other) const {
-		return yzGlobalMaths.closeEnough(w, other.w) && yzGlobalMaths.closeEnough(x, other.x) &&
-		       yzGlobalMaths.closeEnough(y, other.y) && yzGlobalMaths.closeEnough(z, other.z)   ;
+	bool equals(YZG_Quaternion other) const {
+		return YZG_GlobalMaths.closeEnough(w, other.w) && YZG_GlobalMaths.closeEnough(x, other.x) &&
+		       YZG_GlobalMaths.closeEnough(y, other.y) && YZG_GlobalMaths.closeEnough(z, other.z)   ;
 	}
 
 	/// Returns if the Quaternion is a 0 Quaternion.
 	bool isZero() const {
-		return yzGlobalMaths.closeEnough(w * w + x * x + y * y + z * z, 0);
+		return YZG_GlobalMaths.closeEnough(w * w + x * x + y * y + z * z, 0);
 	}
 
 	/// Returns if the Quaternion is a unit Quaternion.
 	bool isUnit() const {
-		return yzGlobalMaths.closeEnough(w * w + x * x + y * y + z * z, 1);
+		return YZG_GlobalMaths.closeEnough(w * w + x * x + y * y + z * z, 1);
 	}
 
 	/// Returns if the Quaternion is an identity Quaternion.
 	bool isIdentity() const {
-		return yzGlobalMaths.closeEnough(w, 1) && yzGlobalMaths.closeEnough(x, 0) &&
-		       yzGlobalMaths.closeEnough(y, 0) && yzGlobalMaths.closeEnough(z, 0)   ;
+		return YZG_GlobalMaths.closeEnough(w, 1) && YZG_GlobalMaths.closeEnough(x, 0) &&
+		       YZG_GlobalMaths.closeEnough(y, 0) && YZG_GlobalMaths.closeEnough(z, 0)   ;
 	}
 
 	/// Returns the dot product of two Quaternions.
-	double dotProduct(yzQuaternion other) const {
+	double dotProduct(YZG_Quaternion other) const {
 		return (w * other.w + x * other.x + y * other.y + z * other.z);
 	}
 
 	/// Copies another Quaternion into this one.
-	void copy(yzQuaternion other) {
+	void copy(YZG_Quaternion other) {
 		w = other.w;
 		x = other.x;
 		y = other.y;
@@ -178,7 +178,7 @@ class yzQuaternion {
 
 	/// Rotates a Vector3 using this Quaternion.
 	Vector3 rotateVector3(Vector3 vec) const {
-		yzQuaternion q = unit();
+		YZG_Quaternion q = unit();
 
 		Vector3 u = (q.x, q.y, q.z);
 		double s = q.w;
@@ -187,14 +187,14 @@ class yzQuaternion {
 	}
 
 	/// Linearly interpolates between two Quaternions, clamping the parameters.
-	static yzQuaternion lerp(yzQuaternion from, yzQuaternion to, double time) {
+	static YZG_Quaternion lerp(YZG_Quaternion from, YZG_Quaternion to, double time) {
 		time = clamp(time, 0, 1);
 		return lerpUnclamped(from, to, time);
 	}
 
 	/// Linearly interpolates between two Quaternions.
-	static yzQuaternion lerpUnclamped(yzQuaternion from, yzQuaternion to, double time) {
-		yzQuaternion ret = new("yzQuaternion");
+	static YZG_Quaternion lerpUnclamped(YZG_Quaternion from, YZG_Quaternion to, double time) {
+		YZG_Quaternion ret = new("YZG_Quaternion");
 		double reverseTime = 1 - time;
 		ret.x = reverseTime * from.x + time * to.x;
 		ret.y = reverseTime * from.y + time * to.y;
@@ -205,14 +205,14 @@ class yzQuaternion {
 	}
 
 	/// Spherically interpolates between two Quaternions, clamping the parameters.
-	static yzQuaternion slerp(yzQuaternion from, yzQuaternion to, double time) {
+	static YZG_Quaternion slerp(YZG_Quaternion from, YZG_Quaternion to, double time) {
 		time = clamp(time, 0, 1);
 		return slerpUnclamped(from, to, time);
 	}
 
 	/// Spherically interpolates between two Quaternions.
-	static yzQuaternion slerpUnclamped(yzQuaternion from, yzQuaternion to, double time) {
-		yzQuaternion q3;
+	static YZG_Quaternion slerpUnclamped(YZG_Quaternion from, YZG_Quaternion to, double time) {
+		YZG_Quaternion q3;
 		double fromToDot = from.dotProduct(to);
 
 		if (fromToDot < 0) {
@@ -233,12 +233,12 @@ class yzQuaternion {
 	}
 
 	/// Returns the 0 Quaternion.
-	static yzQuaternion zero() {
-		return new("yzQuaternion").init(0, 0, 0, 0);
+	static YZG_Quaternion zero() {
+		return new("YZG_Quaternion").init(0, 0, 0, 0);
 	}
 
 	/// Returns the identity Quaternion.
-	static yzQuaternion identity() {
-		return new("yzQuaternion").init(1, 0, 0, 0);
+	static YZG_Quaternion identity() {
+		return new("YZG_Quaternion").init(1, 0, 0, 0);
 	}
 }

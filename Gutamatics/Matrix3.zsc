@@ -1,81 +1,81 @@
-class yzMatrix3 {
-	yzMatrix3S mat;
+class YZG_Matrix3 {
+	YZG_Matrix3S mat;
 
 	/// Initialises a new Matrix3 in a static context.
-	static yzMatrix3 create() {
-		return new("yzMatrix3");
+	static YZG_Matrix3 create() {
+		return new("YZG_Matrix3");
 	}
 
 	/// Returns an identity matrix.
-	static yzMatrix3 identity() {
-		let ret = yzMatrix3.create();
-		yzMatrix3S.identity(ret.mat);
+	static YZG_Matrix3 identity() {
+		let ret = YZG_Matrix3.create();
+		YZG_Matrix3S.identity(ret.mat);
 		return ret;
 	}
 
 	/// Returns a rotation matrix.
-	static yzMatrix3 rotate(double angle) {
-		let ret = yzMatrix3.create();
-		yzMatrix3S.rotate(angle, ret.mat);
+	static YZG_Matrix3 rotate(double angle) {
+		let ret = YZG_Matrix3.create();
+		YZG_Matrix3S.rotate(angle, ret.mat);
 		return ret;
 	}
 
 	/// Returns a translation matrix.
-	static yzMatrix3 translate(Vector2 translate) {
-		let ret = yzMatrix3.create();
-		yzMatrix3S.translate(translate, ret.mat);
+	static YZG_Matrix3 translate(Vector2 translate) {
+		let ret = YZG_Matrix3.create();
+		YZG_Matrix3S.translate(translate, ret.mat);
 		return ret;
 	}
 
 	/// Returns a scaling matrix.
-	static yzMatrix3 scale(Vector2 scale) {
-		let ret = yzMatrix3.create();
-		yzMatrix3S.scale(scale, ret.mat);
+	static YZG_Matrix3 scale(Vector2 scale) {
+		let ret = YZG_Matrix3.create();
+		YZG_Matrix3S.scale(scale, ret.mat);
 		return ret;
 	}
 
-	static yzMatrix3 createTRS(Vector2 translate, double angle, Vector2 scale) {
-		let ret = yzMatrix3.create();
-		yzMatrix3S.createTRS(translate, angle, scale, ret.mat);
+	static YZG_Matrix3 createTRS(Vector2 translate, double angle, Vector2 scale) {
+		let ret = YZG_Matrix3.create();
+		YZG_Matrix3S.createTRS(translate, angle, scale, ret.mat);
 		return ret;
 	}
 
-	yzMatrix3 clone() const {
-		let ret = yzMatrix3.create();
+	YZG_Matrix3 clone() const {
+		let ret = YZG_Matrix3.create();
 		self.mat.cloneTo(ret.mat);
 		return ret;
 	}
 
-	yzMatrix3 transpose() const {
-		let ret = yzMatrix3.create();
+	YZG_Matrix3 transpose() const {
+		let ret = YZG_Matrix3.create();
 		self.mat.transpose(ret.mat);
 		return ret;
 	}
 
 	/// Adds two matrices and returns the result.
-	yzMatrix3 addMatrix(yzMatrix3 other) const {
-		yzMatrix3 ret = yzMatrix3.create();
+	YZG_Matrix3 addMatrix(YZG_Matrix3 other) const {
+		YZG_Matrix3 ret = YZG_Matrix3.create();
 		self.mat.addMatrix(other.mat, ret.mat);
 		return ret;
 	}
 
 	/// Multiplies the matrix by a scalar and returns the result.
-	yzMatrix3 multiplyScalar(double scalar) const {
-		yzMatrix3 ret = yzMatrix3.create();
+	YZG_Matrix3 multiplyScalar(double scalar) const {
+		YZG_Matrix3 ret = YZG_Matrix3.create();
 		self.mat.multiplyScalar(scalar, ret.mat);
 		return ret;
 	}
 
 	/// Multiplies two matrices and returns the result.
-	yzMatrix3 multiplyMatrix(yzMatrix3 other) const {
-		yzMatrix3 ret = yzMatrix3.create();
+	YZG_Matrix3 multiplyMatrix(YZG_Matrix3 other) const {
+		YZG_Matrix3 ret = YZG_Matrix3.create();
 		self.mat.multiplyMatrix(other.mat, ret.mat);
 		return ret;
 	}
 
 	/// Multiplies two matrices and returns the result, implicitly transposing the latter.
-	yzMatrix3 multiplyTranspose(yzMatrix3 other) const {
-		yzMatrix3 ret = yzMatrix3.create();
+	YZG_Matrix3 multiplyTranspose(YZG_Matrix3 other) const {
+		YZG_Matrix3 ret = YZG_Matrix3.create();
 		self.mat.multiplyTranspose(other.mat, ret.mat);
 		return ret;
 	}
@@ -86,7 +86,7 @@ class yzMatrix3 {
 	}
 
 	/// Multiplies this Matrix by a 2D vector.
-	Vector2 multiplyVector2(Vector2 vec, yzVectorType type = yzVector_Position, bool divideZ = true) const {
+	Vector2 multiplyVector2(Vector2 vec, YZG_VectorType type = YZG_Vector_Position, bool divideZ = true) const {
 		return self.mat.multiplyVector2(vec, type, divideZ);
 	}
 
@@ -98,8 +98,8 @@ class yzMatrix3 {
 		self.mat.swapRows(row0, row1);
 	}
 
-	yzMatrix3 inverse() const {
-		let ret = yzMatrix3.create();
+	YZG_Matrix3 inverse() const {
+		let ret = YZG_Matrix3.create();
 		self.mat.inverse(ret.mat);
 		return ret;
 	}
@@ -117,14 +117,14 @@ class yzMatrix3 {
 	}
 }
 
-struct yzMatrix3S {
+struct YZG_Matrix3S {
 	const ROWS = 3;
 	const COLUMNS = 3;
 
 	double values[ROWS][COLUMNS];
 
 	/// Returns a zero matrix.
-	static void create(yzMatrix3S ret) {
+	static void create(YZG_Matrix3S ret) {
 		for (let r = 0; r < ROWS; r++) {
 			for (let c = 0; c < COLUMNS; c++) {
 				ret.values[r][c] = 0;
@@ -133,7 +133,7 @@ struct yzMatrix3S {
 	}
 
 	/// Returns an identity matrix.
-	static void identity(yzMatrix3S ret) {
+	static void identity(YZG_Matrix3S ret) {
 		ret.values[0][0] = 1;
 		ret.values[0][1] = 0;
 		ret.values[0][2] = 0;
@@ -148,7 +148,7 @@ struct yzMatrix3S {
 	}
 
 	/// Returns a rotation matrix.
-	static void rotate(double angle, yzMatrix3S ret) {
+	static void rotate(double angle, YZG_Matrix3S ret) {
 		identity(ret);
 		double s = sin(angle);
 		double c = cos(angle);
@@ -161,36 +161,36 @@ struct yzMatrix3S {
 	}
 
 	/// Returns a translation matrix.
-	static void translate(Vector2 translate, yzMatrix3S ret) {
+	static void translate(Vector2 translate, YZG_Matrix3S ret) {
 		identity(ret);
 		ret.values[0][2] = translate.x;
 		ret.values[1][2] = translate.y;
 	}
 
 	/// Returns a scaling matrix.
-	static void scale(Vector2 scale, yzMatrix3S ret) {
+	static void scale(Vector2 scale, YZG_Matrix3S ret) {
 		create(ret);
 		ret.values[0][0] = scale.x;
 		ret.values[1][1] = scale.y;
 		ret.values[2][2] = 1.0;
 	}
 
-	static void createTRS(Vector2 translate, double angle, Vector2 scale, yzMatrix3S ret) {
-		yzMatrix3S translateMat; identity(translateMat);
+	static void createTRS(Vector2 translate, double angle, Vector2 scale, YZG_Matrix3S ret) {
+		YZG_Matrix3S translateMat; identity(translateMat);
 		translateMat.values[0][2] = translate.x;
 		translateMat.values[1][2] = translate.y;
 
-		yzMatrix3S rotateMat; rotate(angle, rotateMat);
+		YZG_Matrix3S rotateMat; rotate(angle, rotateMat);
 
-		yzMatrix3S scaleMat; identity(scaleMat);
+		YZG_Matrix3S scaleMat; identity(scaleMat);
 		scaleMat.values[0][0] = scale.x;
 		scaleMat.values[1][1] = scale.y;
 
-		yzMatrix3S tmp; translateMat.multiplyMatrix(rotateMat, tmp);
+		YZG_Matrix3S tmp; translateMat.multiplyMatrix(rotateMat, tmp);
 		tmp.multiplyMatrix(scaleMat, ret);
 	}
 
-	void cloneTo(yzMatrix3S ret) const {
+	void cloneTo(YZG_Matrix3S ret) const {
 		for (int r = 0; r < ROWS; r++) {
 			for (int c = 0; c < COLUMNS; c++) {
 				ret.values[r][c] = self.values[r][c];
@@ -198,7 +198,7 @@ struct yzMatrix3S {
 		}
 	}
 
-	void transpose(yzMatrix3S ret) const {
+	void transpose(YZG_Matrix3S ret) const {
 		for (int r = 0; r < ROWS; r++) {
 			for (int c = 0; c < COLUMNS; c++) {
 				ret.values[r][c] = self.values[c][r];
@@ -207,7 +207,7 @@ struct yzMatrix3S {
 	}
 
 	/// Adds two matrices and returns the result.
-	void addMatrix(yzMatrix3S other, yzMatrix3S ret) const {
+	void addMatrix(YZG_Matrix3S other, YZG_Matrix3S ret) const {
 		ret.values[0][0] = self.values[0][0] + other.values[0][0];
 		ret.values[0][1] = self.values[0][1] + other.values[0][1];
 		ret.values[0][2] = self.values[0][2] + other.values[0][2];
@@ -222,7 +222,7 @@ struct yzMatrix3S {
 	}
 
 	/// Multiplies the matrix by a scalar and returns the result.
-	void multiplyScalar(double scalar, yzMatrix3S ret) const {
+	void multiplyScalar(double scalar, YZG_Matrix3S ret) const {
 		ret.values[0][0] = self.values[0][0] * scalar;
 		ret.values[0][1] = self.values[0][1] * scalar;
 		ret.values[0][2] = self.values[0][2] * scalar;
@@ -237,7 +237,7 @@ struct yzMatrix3S {
 	}
 
 	/// Multiplies two matrices and returns the result.
-	void multiplyMatrix(yzMatrix3S other, yzMatrix3S ret) const {
+	void multiplyMatrix(YZG_Matrix3S other, YZG_Matrix3S ret) const {
 		for (int row = 0; row < ROWS; row++) {
 			ret.values[row][0] =
 				self.values[row][0] * other.values[0][0] +
@@ -257,7 +257,7 @@ struct yzMatrix3S {
 	}
 
 	/// Multiplies two matrices and returns the result, implicitly transposing the latter.
-	void multiplyTranspose(yzMatrix3S other, yzMatrix3S ret) const {
+	void multiplyTranspose(YZG_Matrix3S other, YZG_Matrix3S ret) const {
 		for (int row = 0; row < ROWS; row++) {
 			ret.values[row][0] =
 				self.values[row][0] * other.values[0][0] +
@@ -288,8 +288,8 @@ struct yzMatrix3S {
 	}
 
 	/// Multiplies this Matrix by a 2D vector.
-	Vector2 multiplyVector2(Vector2 vec, yzVectorType type = yzVector_Position, bool divideZ = true) const {
-		let vecZ = (type == yzVector_Position) ? 1.0 : 0.0;
+	Vector2 multiplyVector2(Vector2 vec, YZG_VectorType type = YZG_Vector_Position, bool divideZ = true) const {
+		let vecZ = (type == YZG_Vector_Position) ? 1.0 : 0.0;
 
 		let ret = (
 			values[0][0] * vec.x + values[0][1] * vec.y + values[0][2] * vecZ,
@@ -316,9 +316,9 @@ struct yzMatrix3S {
 		}
 	}
 
-	void inverse(yzMatrix3S ret) const {
+	void inverse(YZG_Matrix3S ret) const {
 		let n = ROWS;
-		yzMatrix3S lhs; self.cloneTo(lhs);
+		YZG_Matrix3S lhs; self.cloneTo(lhs);
 		identity(ret);
 		for (int p = 0; p < n; p++) {
 			let largestNum = abs(lhs.values[p][p]);
@@ -358,7 +358,7 @@ struct yzMatrix3S {
 		let scientific = false;
 		for (let i = 0; i < ROWS * COLUMNS; i++) {
 			let val = self.values[i / COLUMNS][i % COLUMNS];
-			scientific |= (abs(yzGlobalMaths.getDoubleExponent(val)) > 4);
+			scientific |= (abs(YZG_GlobalMaths.getDoubleExponent(val)) > 4);
 			if (scientific) {
 				break;
 			}

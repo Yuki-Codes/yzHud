@@ -1,4 +1,4 @@
-class UiAddOn : StaticEventHandler
+class YZH_UiAddOnBase : StaticEventHandler
 {
     PlayerInfo Player;
 

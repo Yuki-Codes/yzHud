@@ -1,4 +1,4 @@
-class yzHasher abstract {
+class YZG_Hasher abstract {
 	abstract virtualscope uint hash(Object o);
 	abstract virtualscope bool eq(Object o0, Object o1);
 	static void hashCombine(out uint seed, uint other) {
@@ -6,91 +6,91 @@ class yzHasher abstract {
 	}
 }
 
-class yzBoxedInt {
+class YZG_BoxedInt {
 	int val;
-	static yzBoxedInt create(int val) {
+	static YZG_BoxedInt create(int val) {
 		let ret = new();
 		ret.val = val;
 		return ret;
 	}
-	yzBoxedInt clone() {
+	YZG_BoxedInt clone() {
 		let ret = new();
 		ret.val = self.val;
 		return ret;
 	}
 }
-class yzIntHasher : yzHasher {
-	override uint hash(Object o) { return yzBoxedInt(o).val; }
-	override bool eq(Object o0, Object o1) { return yzBoxedInt(o0).val == yzBoxedInt(o1).val; }
+class YZG_IntHasher : YZG_Hasher {
+	override uint hash(Object o) { return YZG_BoxedInt(o).val; }
+	override bool eq(Object o0, Object o1) { return YZG_BoxedInt(o0).val == YZG_BoxedInt(o1).val; }
 }
 
-class yzBoxedUInt {
+class YZG_BoxedUInt {
 	uint val;
-	static yzBoxedUInt create(uint val) {
+	static YZG_BoxedUInt create(uint val) {
 		let ret = new();
 		ret.val = val;
 		return ret;
 	}
-	yzBoxedUInt clone() {
+	YZG_BoxedUInt clone() {
 		let ret = new();
 		ret.val = self.val;
 		return ret;
 	}
 }
-class yzUIntHasher : yzHasher {
-	override uint hash(Object o) { return yzBoxedUInt(o).val; }
-	override bool eq(Object o0, Object o1) { return yzBoxedUInt(o0).val == yzBoxedUInt(o1).val; }
+class YZG_UIntHasher : YZG_Hasher {
+	override uint hash(Object o) { return YZG_BoxedUInt(o).val; }
+	override bool eq(Object o0, Object o1) { return YZG_BoxedUInt(o0).val == YZG_BoxedUInt(o1).val; }
 }
 
-class yzBoxedDouble {
+class YZG_BoxedDouble {
 	double val;
-	static yzBoxedDouble create(double val) {
+	static YZG_BoxedDouble create(double val) {
 		let ret = new();
 		ret.val = val;
 		return ret;
 	}
-	yzBoxedDouble clone() {
+	YZG_BoxedDouble clone() {
 		let ret = new();
 		ret.val = self.val;
 		return ret;
 	}
 }
 
-class yzBoxedString {
+class YZG_BoxedString {
 	String val;
-	static yzBoxedString create(String val) {
+	static YZG_BoxedString create(String val) {
 		let ret = new();
 		ret.val = val;
 		return ret;
 	}
-	yzBoxedString clone() {
+	YZG_BoxedString clone() {
 		let ret = new();
 		ret.val = self.val;
 		return ret;
 	}
 }
 
-class yzHashSentinel {}
+class YZG_HashSentinel {}
 
-class yzHashUnoccupied {}
+class YZG_HashUnoccupied {}
 
-class yzKVStorage {
+class YZG_KVStorage {
 	Array<Object> keys;
 	Array<Object> values;
 	uint loadCount;
 
-	yzHashUnoccupied unoccupied;
+	YZG_HashUnoccupied unoccupied;
 
-	yzHashSentinel empty;
-	yzHashSentinel tombstone;
+	YZG_HashSentinel empty;
+	YZG_HashSentinel tombstone;
 
 	const SEED32 = 0x27220a95u;
-	private static uint hash(Object key, yzHasher hasher) {
+	private static uint hash(Object key, YZG_Hasher hasher) {
 		let h = hasher.hash(key);
 		return h * SEED32;
 	}
 
-	Object get(Object key, yzHasher hasher) {
+	Object get(Object key, YZG_Hasher hasher) {
 		let hash = hash(key, hasher);
 		let size = uint(self.keys.size());
 		let index = hash % size;
@@ -108,8 +108,8 @@ class yzKVStorage {
 		return self.unoccupied;
 	}
 
-	yzKVStorage resized(uint newSize, yzHasher hasher) {
-		let newKV = new("yzKVStorage");
+	YZG_KVStorage resized(uint newSize, YZG_Hasher hasher) {
+		let newKV = new("YZG_KVStorage");
 		newKV.keys.resize(newSize);
 		newKV.values.resize(newSize);
 
@@ -129,7 +129,7 @@ class yzKVStorage {
 		return newKV;
 	}
 
-	void insert(Object key, Object value, yzHasher hasher) {
+	void insert(Object key, Object value, YZG_Hasher hasher) {
 		let hash = hash(key, hasher);
 		let size = uint(self.keys.size());
 		let index = hash % size;
@@ -164,7 +164,7 @@ class yzKVStorage {
 		}
 	}
 
-	Object remove(Object key, yzHasher hasher) {
+	Object remove(Object key, YZG_Hasher hasher) {
 		let hash = hash(key, hasher);
 		let size = uint(self.keys.size());
 		{
@@ -206,11 +206,11 @@ class yzKVStorage {
 	}
 }
 
-class yzHashMapIterator {
-	private yzKVStorage m;
+class YZG_HashMapIterator {
+	private YZG_KVStorage m;
 	private int i;
 
-	static yzHashMapIterator internalCreate(yzKVStorage kv) {
+	static YZG_HashMapIterator internalCreate(YZG_KVStorage kv) {
 		let ret = new();
 		ret.m = kv;
 		ret.i = 0;
@@ -230,18 +230,18 @@ class yzHashMapIterator {
 	}
 }
 
-class yzHashMap {
-	private yzKVStorage kv;
-	private yzHasher hasher;
+class YZG_HashMap {
+	private YZG_KVStorage kv;
+	private YZG_Hasher hasher;
 
-	static yzHashMap create(yzHasher hasher) {
+	static YZG_HashMap create(YZG_Hasher hasher) {
 		let ret = new();
-		ret.kv = new("yzKVStorage");
+		ret.kv = new("YZG_KVStorage");
 		ret.kv.keys.resize(8);
 		ret.kv.values.resize(8);
-		ret.kv.unoccupied = new("yzHashUnoccupied");
-		ret.kv.empty = new("yzHashSentinel");
-		ret.kv.tombstone = new("yzHashSentinel");
+		ret.kv.unoccupied = new("YZG_HashUnoccupied");
+		ret.kv.empty = new("YZG_HashSentinel");
+		ret.kv.tombstone = new("YZG_HashSentinel");
 		ret.kv.clear();
 		ret.hasher = hasher;
 		return ret;
@@ -252,7 +252,7 @@ class yzHashMap {
 	}
 
 	bool containsKey(Object key) {
-		return !(self.kv.get(key, self.hasher) is "yzHashUnoccupied");
+		return !(self.kv.get(key, self.hasher) is "YZG_HashUnoccupied");
 	}
 
 	void resize(uint newSize) {
@@ -278,8 +278,8 @@ class yzHashMap {
 		self.kv.clear();
 	}
 
-	yzHashMapIterator iter() {
-		return yzHashMapIterator.internalCreate(self.kv);
+	YZG_HashMapIterator iter() {
+		return YZG_HashMapIterator.internalCreate(self.kv);
 	}
 
 	String debugRepr() {
@@ -309,10 +309,10 @@ class yzHashMap {
 	}
 }
 
-class yzHashSetIterator {
-	private yzHashMapIterator i;
+class YZG_HashSetIterator {
+	private YZG_HashMapIterator i;
 
-	static yzHashSetIterator internalCreate(yzHashMapIterator i) {
+	static YZG_HashSetIterator internalCreate(YZG_HashMapIterator i) {
 		let ret = new();
 		ret.i = i;
 		return ret;
@@ -323,12 +323,12 @@ class yzHashSetIterator {
 	}
 }
 
-class yzHashSet {
-	private yzHashMap hm;
+class YZG_HashSet {
+	private YZG_HashMap hm;
 
-	static yzHashSet create(yzHasher hasher) {
+	static YZG_HashSet create(YZG_Hasher hasher) {
 		let ret = new();
-		ret.hm = yzHashMap.create(hasher);
+		ret.hm = YZG_HashMap.create(hasher);
 		return ret;
 	}
 
@@ -356,8 +356,8 @@ class yzHashSet {
 		self.hm.clear();
 	}
 
-	yzHashSetIterator iter() {
-		return yzHashSetIterator.internalCreate(self.hm.iter());
+	YZG_HashSetIterator iter() {
+		return YZG_HashSetIterator.internalCreate(self.hm.iter());
 	}
 
 	String debugRepr() {

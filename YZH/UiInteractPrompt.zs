@@ -1,16 +1,14 @@
-#include "alignments.zs"
-
-class InteractPrompt : UiAddOn
+class YZH_UiInteractPrompt : YZH_UiAddOnBase
 {
     private ui Font m_font;
-    private ui PromptDetector m_tracer;
+    private ui YZH_PromptDetector m_tracer;
     private ui String m_promptText;
-    private ui Interpolator m_alpha;
+    private ui YZH_Interpolator m_alpha;
 
     override void Initialize()
     {
         m_font = Font.FindFont('SmallFont');
-        m_alpha = new("Interpolator");
+        m_alpha = new("YZH_Interpolator");
 
 
         let [useKey1, useKey2] = bindings.GetKeysForCommand("+use");
@@ -54,7 +52,7 @@ class InteractPrompt : UiAddOn
             return;
 
         if (m_tracer == null)
-            m_tracer = new('PromptDetector');
+            m_tracer = new('YZH_PromptDetector');
 
 		// Fire from player's screen center:
 		Vector3 start = (mo.pos.xy, self.Player.ViewZ);
@@ -83,7 +81,7 @@ class InteractPrompt : UiAddOn
     }
 }
 
-class PromptDetector : LineTracer
+class YZH_PromptDetector : LineTracer
 {
 	override ETraceStatus TraceCallback()
 	{

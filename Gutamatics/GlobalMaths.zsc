@@ -1,4 +1,4 @@
-class yzGlobalMaths {
+class YZG_GlobalMaths {
 	/// Returns the sign of s.
 	static int sign(double s) {
 		if (s > 0) return 1;

@@ -1,9 +1,6 @@
-#include "UiAddOn.zs"
-#include "Interpolator.zs"
-
-class BossBar : UiAddOn
+class YZH_UiBossBar : YZH_UiAddOnBase
 {
-    private Array<BossEntry> m_bosses;
+    private Array<YZH_BossEntry> m_bosses;
 
     override void Initialize()
     {
@@ -43,7 +40,7 @@ class BossBar : UiAddOn
         {
             if (actor.bBoss)
             {
-                BossEntry entry = new("BossEntry");
+                YZH_BossEntry entry = new("YZH_BossEntry");
                 entry.InitializeWorld(actor);
 			    m_bosses.Push(entry);
             }
@@ -54,14 +51,14 @@ class BossBar : UiAddOn
     {
 		if (event.Thing.bBoss)
         {
-            BossEntry entry = new("BossEntry");
+            YZH_BossEntry entry = new("YZH_BossEntry");
             entry.InitializeWorld(event.Thing);
 			m_bosses.Push(entry);
 		}
 	}
 }
 
-class BossEntry
+class YZH_BossEntry
 {
     private Actor m_actor;
     private bool m_isActive;
@@ -71,9 +68,9 @@ class BossEntry
     private ui TextureId m_barFillTextureId;
     private ui Font m_font;
 
-    private ui Interpolator m_value;
-    private ui Interpolator m_width;
-    private ui Interpolator m_textAlpha;
+    private ui YZH_Interpolator m_value;
+    private ui YZH_Interpolator m_width;
+    private ui YZH_Interpolator m_textAlpha;
 
     play void InitializeWorld(Actor actor)
     {
@@ -88,13 +85,13 @@ class BossEntry
         m_barFillTextureId = TexMan.CheckForTexture("barfill");
         m_font = Font.FindFont('SmallFont');
 
-        m_value = new("Interpolator");
+        m_value = new("YZH_Interpolator");
 
-        m_width = new("Interpolator");
+        m_width = new("YZH_Interpolator");
         m_width.Target = 256;
         m_width.Speed = 0.5f;
 
-        m_textAlpha = new("Interpolator");
+        m_textAlpha = new("YZH_Interpolator");
         m_textAlpha.Target = 1.0f;
     }
 
@@ -128,7 +125,7 @@ class BossEntry
         return m_isActive;
     }
 
-    ui void Draw(UiAddOn addOn, float deltaTime, int y)
+    ui void Draw(YZH_UiAddOnBase addOn, float deltaTime, int y)
     {
         if (!m_barBgTextureId.IsValid())
             InitializeUi();

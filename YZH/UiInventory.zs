@@ -1,14 +1,12 @@
-#include "alignments.zs"
-
-class KeyBar : UiAddOn
+class YZH_UiInventory : YZH_UiAddOnBase
 {
-    private ui Array<KeyEntry> m_keys;
+    private ui Array<YZH_KeyEntry> m_keys;
 
     override void Initialize()
     {
         for (int i = 0; i < Key.GetKeyTypeCount(); i++)
         {
-            let entry = new("KeyEntry");
+            let entry = new("YZH_KeyEntry");
             entry.Initialize(self, Key.GetKeyType(i));
             m_keys.push(entry);
         }
@@ -40,38 +38,33 @@ class KeyBar : UiAddOn
     }
 }
 
-class KeyEntry ui
+class YZH_KeyEntry ui
 {
     private class<Key> m_keyClass;
     private Key m_key;
     private ui TextureId m_icon;
-    private ui Interpolator m_xPos;
-    private ui Interpolator m_yPos;
-    private ui Interpolator m_scale;
-    private ui Interpolator m_alpha;
+    private ui YZH_Interpolator m_xPos;
+    private ui YZH_Interpolator m_scale;
+    private ui YZH_Interpolator m_alpha;
 
-    void Initialize(UiAddOn uiAddOn, class<Key> keyClass)
+    void Initialize(YZH_UiAddOnBase uiAddOn, class<Key> keyClass)
     {
         m_keyClass = keyClass;
 
-        m_xPos = new("Interpolator");
+        m_xPos = new("YZH_Interpolator");
         m_xPos.Current = uiAddOn.GetWidth() / 2;
         m_xPos.Speed = 0.75f;
 
-        m_yPos = new("Interpolator");
-        m_yPos.Current = uiAddOn.GetHeight() / 2;
-        m_yPos.Speed = 0.75f;
-
-        m_scale = new("Interpolator");
+        m_scale = new("YZH_Interpolator");
         m_scale.Target = 1.0;
         m_scale.Current = 4.0;
 
-        m_alpha = new("Interpolator");
+        m_alpha = new("YZH_Interpolator");
         m_alpha.Current = 0.0f;
         m_alpha.Target = 1.0f;
     }
 
-    void Tick(UiAddOn uiAddOn)
+    void Tick(YZH_UiAddOnBase uiAddOn)
     {
         Key key = Key(uiAddOn.Player.mo.FindInventory(m_keyClass));
         if (key != null && m_key == null)
@@ -84,7 +77,6 @@ class KeyEntry ui
             Console.Printf("key lost");
             m_key == null;
             m_xPos.Current = uiAddOn.GetWidth() / 2;
-            m_yPos.Current = uiAddOn.GetHeight() / 2;
             m_scale.Current = 4.0;
             m_alpha.Current = 0.0f;
         }
@@ -95,15 +87,14 @@ class KeyEntry ui
         return m_key != null && m_icon.IsValid();
     }
 
-    void Draw(UiAddOn uiAddOn, float deltaTime, int x, int y)
+    void Draw(YZH_UiAddOnBase uiAddOn, float deltaTime, int x, int y)
     {
         m_xPos.Target = x;
-        m_yPos.Target = y;
 
         uiAddOn.DrawTexture(
             m_icon,
             m_xPos.Update(deltaTime),
-            m_yPos.Update(deltaTime),
+            y,
             scale:m_scale.Update(deltaTime),
             alpha:m_alpha.Update(deltaTime));
     }
