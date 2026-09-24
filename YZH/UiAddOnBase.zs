@@ -103,8 +103,8 @@ class YZH_UiAddOnBase : StaticEventHandler
 
         if (scale != 1.0)
         {
-            width *= scale;
-            height *= scale;
+            width = size.x * scale;
+            height = size.y * scale;
         }
 
         int clipTop = 0;

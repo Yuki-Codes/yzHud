@@ -5,6 +5,7 @@ GameInfo
     AddEventHandlers = "YZH_UiBossBar"
     AddEventHandlers = "YZH_UiInteractPrompt"
     AddEventHandlers = "YZH_UiInteractHighlight"
-    AddEventHandlers = "YZH_UiInventory"
+    AddEventHandlers = "YZH_UiKeys"
+    AddEventHandlers = "YZH_UiPowerups"
     AddEventHandlers = "YZH_UiPickupEffect"
 }
