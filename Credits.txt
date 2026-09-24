@@ -14,7 +14,7 @@ Damage-Numbers-Plus-Plus - https://github.com/Boondorl/Damage-Numbers-Plus-Plus
 
 Special thanks to everyone who helped me learn on the ZDoom discord
     Gutawer
-    Cadence
+    Cadence Squirrel
     Dithered Output
     Nash Muhandes
     Boondorl
