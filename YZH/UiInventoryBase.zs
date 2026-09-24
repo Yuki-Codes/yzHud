@@ -31,6 +31,11 @@ class YZH_UiInventoryBase : YZH_UiAddOnBase
             m_items[i].Tick(self);
         }
     }
+
+    virtual ui int GetItemValue(Inventory item)
+    {
+        return 1;
+    }
 }
 
 class YZH_InventoryEntry ui
@@ -42,7 +47,7 @@ class YZH_InventoryEntry ui
     private ui YZH_Interpolator m_xPos;
     private ui YZH_Interpolator m_alpha;
 
-    void Initialize(YZH_UiAddOnBase uiAddOn, class<Inventory> itemClass)
+    void Initialize(YZH_UiInventoryBase uiAddOn, class<Inventory> itemClass)
     {
         m_itemClass = itemClass;
 
@@ -57,7 +62,7 @@ class YZH_InventoryEntry ui
         m_alpha.Target = 1.0f;
     }
 
-    void Tick(YZH_UiAddOnBase uiAddOn)
+    void Tick(YZH_UiInventoryBase uiAddOn)
     {
         Inventory item = uiAddOn.Player.mo.FindInventory(m_itemClass);
         if (item != null && m_item == null)
@@ -79,7 +84,7 @@ class YZH_InventoryEntry ui
         return m_item != null && m_icon.IsValid();
     }
 
-    void Draw(YZH_UiAddOnBase uiAddOn, float deltaTime, int x, int y)
+    void Draw(YZH_UiInventoryBase uiAddOn, float deltaTime, int x, int y)
     {
         m_xPos.Target = x;
 
@@ -90,12 +95,18 @@ class YZH_InventoryEntry ui
             alpha:m_alpha.Update(deltaTime),
             height: 16);
 
-        uiAddOn.DrawText(
-            m_font,
-            ".",
-            m_xPos.Current,
-            y,
-            alpha:m_alpha.Current);
+        int value = uiAddOn.GetItemValue(m_item);
+
+        if (value != 0)
+        {
+            uiAddOn.DrawText(
+                m_font,
+                String.Format("%d", value),
+                m_xPos.Current + 20,
+                y + 10,
+                alpha:m_alpha.Current,
+                align: 1);
+        }
     }
 
     private TextureID GetIcon(Inventory item)

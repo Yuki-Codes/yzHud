@@ -20,4 +20,10 @@ class YZH_UiPowerups : YZH_UiInventoryBase
 
         self.DrawBar(deltaTime, x, y, step);
     }
+
+    override int GetItemValue(Inventory item)
+    {
+        Powerup pup = Powerup(item);
+        return int(Ceil(double(pup.EffectTics) / GameTicRate));
+    }
 }

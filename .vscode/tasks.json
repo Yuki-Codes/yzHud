@@ -4,7 +4,7 @@
 		{
 			"type": "shell",
 			"label": "UZDoom",
-			"command": "open -n -W /Applications/Games/UZDoom.app",
+			"command": "open -n -W /Applications/Games/UZDoom.app --args -loadgame save00",
 			"problemMatcher": "$gcc",
 			"icon": {
 				"id": "run",
