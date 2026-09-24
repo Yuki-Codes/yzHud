@@ -24,6 +24,10 @@ class YZH_UiPowerups : YZH_UiInventoryBase
     override int GetItemValue(Inventory item)
     {
         Powerup pup = Powerup(item);
+
+        if(pup.MaxEffectTics == 1)
+            return 0;
+
         return int(Ceil(double(pup.EffectTics) / GameTicRate));
     }
 }

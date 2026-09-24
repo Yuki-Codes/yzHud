@@ -34,7 +34,7 @@ class YZH_UiInventoryBase : YZH_UiAddOnBase
 
     virtual ui int GetItemValue(Inventory item)
     {
-        return 1;
+        return 0;
     }
 }
 
