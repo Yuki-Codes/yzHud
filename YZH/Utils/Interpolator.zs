@@ -1,4 +1,4 @@
-class Interpolator
+class YZH_Interpolator
 {
     float Target;
     float Speed;

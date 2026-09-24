@@ -1,9 +1,10 @@
 GameInfo
 {
-    StatusBarClass = "YzHud"
-    AddEventHandlers = "WeaponsList"
+    StatusBarClass = "YZH_StatusBar"
+    /*AddEventHandlers = "WeaponsList"
     AddEventHandlers = "BossBar"
     AddEventHandlers = "InteractPrompt"
     AddEventHandlers = "KeyBar"
     AddEventHandlers = "InteractHighlight"
+    AddEventHandlers = "PickupView"*/
 }
