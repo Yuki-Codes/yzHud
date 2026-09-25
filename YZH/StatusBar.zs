@@ -38,6 +38,9 @@ class YZH_Statusbar : BaseStatusBar
         if (state == HUD_None)
             return;
 
+        if (automapActive)
+            return;
+
         m_ammo1Interpolator.Update(deltaTime);
         m_ammo2Interpolator.Update(deltaTime);
         m_healthInterpolator.Update(deltaTime);

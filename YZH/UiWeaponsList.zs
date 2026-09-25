@@ -93,6 +93,9 @@ class YZH_UiWeaponsList : YZH_UiAddOnBase
         if (event.type != InputEvent.Type_KeyDown)
             return false;
 
+        if (automapActive)
+            return false;
+
         if (bindings.GetBinding(event.KeyScan) ~== "weapnext")
         {
             m_selectingWeaponNumber = -1;

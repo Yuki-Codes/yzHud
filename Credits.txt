@@ -12,6 +12,9 @@ Keycard and Skullkey graphics - https://github.com/localins/NTMAi/tree/master/sp
 Damage-Numbers-Plus-Plus - https://github.com/Boondorl/Damage-Numbers-Plus-Plus
     Boondorl
 
+Doom-Toolbox - https://github.com/mmaulwurff/doom-toolbox/
+    mmaulwurff
+
 Special thanks to everyone who helped me learn on the ZDoom discord
     Gutawer
     Cadence

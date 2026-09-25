@@ -44,6 +44,9 @@ class YZH_UiInteractHighlight : YZH_UiAddOnBase
     {
         super.RenderUnderlay(event);
 
+        if (automapActive)
+            return;
+
         let player = players[consolePlayer];
         double aspect = Screen.GetWidth() / Screen.GetHeight();
         m_projectionCache.CalculateMatrices(

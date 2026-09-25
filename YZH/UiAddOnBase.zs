@@ -18,6 +18,10 @@ class YZH_UiAddOnBase : StaticEventHandler
     {
     }
 
+    ui virtual void DrawUnder(float deltaTime)
+    {
+    }
+
     ui virtual void Tick()
     {
     }
@@ -28,11 +32,22 @@ class YZH_UiAddOnBase : StaticEventHandler
         m_deltaTime = (drawTime - m_prevDrawTime) / 1000;
         m_deltaTime = clamp(m_deltaTime, 0, 0.1);
         m_prevDrawTime = drawTime;
+
+        if (!m_isInitialized)
+            return;
+
+        if (automapactive)
+            return;
+
+        self.Draw(m_deltaTime);
     }
 
     override void RenderOverlay(RenderEvent event)
     {
         if (!m_isInitialized)
+            return;
+
+        if (automapactive)
             return;
 
         self.Draw(m_deltaTime);
