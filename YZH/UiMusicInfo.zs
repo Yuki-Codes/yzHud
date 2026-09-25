@@ -1,3 +1,8 @@
+#include "YZH/MusicInfo/Parser.zs"
+#include "YZH/MusicInfo/OggParser.zs"
+#include "YZH/MusicInfo/Mp3Parser.zs"
+#include "YZH/MusicInfo/MidiParser.zs"
+
 class YZH_UiMusicInfo : YZH_UiAddOnBase
 {
     private ui Font m_bigFont;
@@ -55,28 +60,33 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
             if (lumpId != -1)
             {
                 string data = Wads.ReadLump(lumpId);
+                YZH_MusicParserBase parser;
 
                 if (data.Left(4) == "OggS")
                 {
-                    m_artistName = SearchVorbisTag("ARTIST", data);
-                    m_trackName = SearchVorbisTag("TITLE", data);
+                    parser = new("YZH_OggParser");
                 }
                 else if (data.Left(3) == "ID3")
                 {
-                    m_artistName = SearchId3Tag("TPE1", data);
-                    m_trackName = SearchId3Tag("TIT2", data);
-                    m_albumName = SearchId3Tag("TALB", data);
+                    parser = new("YZH_Mp3Parser");
                 }
                 else if (data.Left(4) == "MThd")
                 {
-                    Console.Printf("Midi!");
-                    m_artistName = SearchVorbisTag("Title:", data);
+                    parser = new("YZH_MidiParser");
                 }
                 else
                 {
-                    Console.Printf(">> %s", data.Left(10));
-                    // unknown file format. probably midi.
+                    // unknown file format.
                 }
+
+                parser.Parse(data);
+
+                m_artistName = parser.Artist;
+                m_artistName.Replace("\"", "");
+                m_albumName = parser.Album;
+                m_albumName.Replace("\"", "");
+                m_trackName = parser.Title;
+                m_trackName.Replace("\"", "");
             }
 
             // Why you didn't tag titles, Andrew. =(
@@ -185,88 +195,6 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
         return -1;
     }
 
-    // Search the wad data for a tag name in ascii format.
-    private ui String SearchVorbisTag(string tagName, string wadData)
-    {
-        // metadata is somewhere near the font, so don't search the entire track.
-        int searchLength = min(wadData.Length() - 5, 16384);
-
-        for (int i = 0; i < searchLength; i++)
-        {
-            for (int j = 0; j < tagName.Length(); j++)
-            {
-                if (wadData.ByteAt(i + j) != tagName.ByteAt(j))
-                {
-                    break;
-                }
-
-                if (j == tagName.Length() - 1)
-                {
-                    String result;
-
-                    for (int k = 0; k < 64; k++)
-                    {
-                        int nextChar = wadData.ByteAt(2 + i + j + k);
-                        if (nextChar < 32)
-                            return result;
-
-                        result.AppendCharacter(nextChar);
-                    }
-
-                    return result;
-                }
-            }
-        }
-
-        return "";
-    }
-
-    // Thanks to https://github.com/Geetha083/MP3-tag-reader/blob/main/id3_reader.c#L67
-    private ui String SearchId3Tag(string tagName, string wadData)
-    {
-        String header = wadData.Mid(0, 10);
-        if (header.Left(3) != "ID3")
-            return "";
-
-        int sectionVersion = header.ByteAt(3);
-        uint sectionSize = ReadInt(6, header, 4);
-
-        int position = 10;
-
-        while(position < sectionSize)
-        {
-            String frameHeader = wadData.Mid(position, 10);
-            position += 10;
-
-            String frameId = frameHeader.Left(4);
-            uint frameSize = ReadInt(4, frameHeader, sectionVersion);
-            position += frameSize;
-
-            if (frameId.ByteAt(0) == 0)
-                continue;
-
-            if (frameId == tagName)
-                return wadData.Mid(position - frameSize, frameSize);
-        }
-
-        return "";
-    }
-
-    private ui uint ReadInt(int position, string data, int ver)
-    {
-        if (ver >= 4)
-        {
-            return ((uint(data.ByteAt(position)) & 0x7F) << 21) |
-                ((uint(data.ByteAt(position + 1)) & 0x7F) << 14) |
-                ((uint(data.ByteAt(position + 2)) & 0x7F) << 7) |
-                ((uint(data.ByteAt(position + 3)) & 0x7F));
-        }
-
-        return (uint(data.ByteAt(position)) << 24) |
-            (uint(data.ByteAt(position + 1)) << 16) |
-            (uint(data.ByteAt(position + 2)) << 8) |
-            (uint(data.ByteAt(position + 3)));
-    }
 
     private ui String GetFallbackTrackName(string track)
     {
