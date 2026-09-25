@@ -157,9 +157,10 @@ class YZH_UiAddOnBase : StaticEventHandler
         int y,
         int color = Font.CR_WHITE,
         float alpha = 1.0,
-        float align = 0.0f)
+        float align = 0.0,
+        float scale = 1.0)
     {
-        x -= font.stringWidth(text) * align;
+        x -= (font.stringWidth(text) * scale) * align;
 
         Screen.DrawText(
             font,
@@ -171,6 +172,8 @@ class YZH_UiAddOnBase : StaticEventHandler
             DTA_HudRules, 1,
             DTA_KeepRatio, true,
             DTA_VirtualWidth, m_canvasWidth,
-            DTA_VirtualHeight, m_canvasHeight);
+            DTA_VirtualHeight, m_canvasHeight,
+            DTA_ScaleX, scale,
+            DTA_ScaleY, scale);
     }
 }
