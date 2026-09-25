@@ -9,4 +9,5 @@ GameInfo
     AddEventHandlers = "YZH_UiPowerups"
     AddEventHandlers = "YZH_UiPickupEffect"
     AddEventHandlers = "YZH_Unlock"
+    AddEventHandlers = "YZH_UiLevelInfo"
 }
