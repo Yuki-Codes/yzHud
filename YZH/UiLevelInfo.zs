@@ -3,7 +3,7 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
     private ui Font m_bigFont;
     private ui Font m_smallFont;
 
-    private ui LevelLocals m_currentLevel;
+    private ui int m_currentLevel;
     private ui YZH_KeyFrameAnimation m_episodeAnimation;
     private ui YZH_KeyFrameAnimation m_mapNameAnimation;
     private ui YZH_KeyFrameAnimation m_authorAnimation;
@@ -37,12 +37,12 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
 
     override void Draw(float deltaTime)
     {
-        if (m_currentLevel != level)
+        if (m_currentLevel != level.LevelNum)
         {
             m_episodeAnimation.Reset();
             m_mapNameAnimation.Reset();
             m_authorAnimation.Reset();
-            m_currentLevel = level;
+            m_currentLevel = level.LevelNum;
         }
 
         if (m_episodeAnimation.IsComplete()
