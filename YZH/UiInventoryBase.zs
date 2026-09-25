@@ -9,15 +9,19 @@ class YZH_UiInventoryBase : YZH_UiAddOnBase
         m_items.push(entry);
     }
 
-    protected ui void DrawBar(float deltaTime, int x, int y, int step)
+    protected ui void DrawBar(float deltaTime, int x, int y, int direction = 1)
     {
         for (int i = 0; i < m_items.Size(); i++)
         {
             if (!m_items[i].IsValid())
                 continue;
 
-            m_items[i].Draw(self, deltaTime, x, y);
-            x += step;
+            Vector2 anchor = (0, 0);
+            if (direction == -1)
+                anchor = (1, 0);
+
+            int width = m_items[i].Draw(self, deltaTime, x, y, anchor);
+            x += (width + 6) * direction;
         }
     }
 
@@ -84,29 +88,33 @@ class YZH_InventoryEntry ui
         return m_item != null && m_icon.IsValid();
     }
 
-    void Draw(YZH_UiInventoryBase uiAddOn, float deltaTime, int x, int y)
+    int Draw(YZH_UiInventoryBase uiAddOn, float deltaTime, int x, int y, Vector2 anchor)
     {
         m_xPos.Target = x;
 
-        uiAddOn.DrawTexture(
+        Vector2 iconSize = uiAddOn.DrawTexture(
             m_icon,
             m_xPos.Update(deltaTime),
             y,
             alpha:m_alpha.Update(deltaTime),
-            height: 16);
+            height: 16,
+            anchor: anchor);
 
         int value = uiAddOn.GetItemValue(m_item);
 
         if (value != 0)
         {
+            int textPos = m_xPos.Current + (iconSize.x * (1 - anchor.x));
             uiAddOn.DrawText(
                 m_font,
                 String.Format("%d", value),
-                m_xPos.Current + 20,
+                textPos,
                 y + 10,
                 alpha:m_alpha.Current,
                 align: 1);
         }
+
+        return iconSize.x;
     }
 
     private TextureID GetIcon(Inventory item)

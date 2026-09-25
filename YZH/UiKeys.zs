@@ -16,8 +16,6 @@ class YZH_UiKeys : YZH_UiInventoryBase
     {
         int x = (self.GetWidth() / 2) + 100;
         int y = self.GetHeight() - 23;
-        int step = 17;
-
-        self.DrawBar(deltaTime, x, y, step);
+        self.DrawBar(deltaTime, x, y);
     }
 }

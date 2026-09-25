@@ -14,11 +14,10 @@ class YZH_UiPowerups : YZH_UiInventoryBase
 
     override void Draw(float deltaTime)
     {
-        int x = (self.GetWidth() / 2) - 130;
+        int x = (self.GetWidth() / 2) - 100;
         int y = self.GetHeight() - 23;
-        int step = -20;
 
-        self.DrawBar(deltaTime, x, y, step);
+        self.DrawBar(deltaTime, x, y, -1);
     }
 
     override int GetItemValue(Inventory item)

@@ -87,7 +87,7 @@ class YZH_UiAddOnBase : StaticEventHandler
         return m_canvasHeight;
     }
 
-    ui void DrawTexture(
+    ui Vector2 DrawTexture(
         TextureID texture,
         int x,
         int y,
@@ -146,6 +146,8 @@ class YZH_UiAddOnBase : StaticEventHandler
             DTA_TopOffsetF, anchor.Y * size.Y,
             DTA_VirtualWidth, m_canvasWidth,
             DTA_VirtualHeight, m_canvasHeight);
+
+        return (width, height);
     }
 
     ui void DrawText(
