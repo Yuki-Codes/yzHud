@@ -2,7 +2,7 @@ class YZH_UiInteractHighlight : YZH_UiAddOnBase
 {
     const MinDistance = 25;
     const MaxDistance = 1500;
-    const PenetrateThickness = 50;
+    const PenetrateThickness = 10;
     const GroupDistance = 50;
 
     private Array<YZH_LineInteract> m_interacts;
