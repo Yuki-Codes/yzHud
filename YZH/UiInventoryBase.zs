@@ -122,6 +122,7 @@ class YZH_InventoryEntry ui
         if (item.GetClass() == "PowerIronFeet"
             || item.GetClassName() == "PowerDimIronFeet")
             return TexMan.CheckForTexture("rad");
+            //return TexMan.CheckForTexture("PS18A0");
 
         if (item.GetClass() == "PowerInvisibility")
             return TexMan.CheckForTexture("PINSA0");
@@ -132,8 +133,10 @@ class YZH_InventoryEntry ui
         if (item.GetClass() == "PowerStrength")
             return TexMan.CheckForTexture("PSTRA0");
 
-        // if (powerup.GetClass() == "PowerLightAmp")
-        // if (powerup.GetClass() == "PowerFlight")
+        if (item.GetClass() == "PowerLightAmp")
+            return TexMan.CheckForTexture("PVISA0");
+
+        // if (item.GetClass() == "PowerFlight")
 
         return item.SpawnState.GetSpriteTexture(0);
     }
