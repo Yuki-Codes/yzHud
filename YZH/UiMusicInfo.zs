@@ -33,9 +33,9 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
         m_yAnimation = new("YZH_KeyFrameAnimation");
         m_yAnimation.AddKeyFrame(0, 0);
         m_yAnimation.AddKeyFrame(2, 0);
-        m_yAnimation.AddKeyFrame(2.5, 130);
-        m_yAnimation.AddKeyFrame(3.0, 100);
-        m_yAnimation.AddKeyFrame(10.0, 100);
+        m_yAnimation.AddKeyFrame(2.5, 170);
+        m_yAnimation.AddKeyFrame(3.0, 150);
+        m_yAnimation.AddKeyFrame(10.0, 150);
         m_yAnimation.AddKeyFrame(10.5, 0);
     }
 
@@ -67,23 +67,33 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
                     m_trackName = SearchId3Tag("TIT2", data);
                     m_albumName = SearchId3Tag("TALB", data);
                 }
+                else if (data.Left(4) == "MThd")
+                {
+                    Console.Printf("Midi!");
+                    m_artistName = SearchVorbisTag("Title:", data);
+                }
                 else
                 {
+                    Console.Printf(">> %s", data.Left(10));
                     // unknown file format. probably midi.
                 }
             }
 
-            if (m_trackName == "")
-                m_trackName = GetFallbackTrackName(lumpName);
+            // Why you didn't tag titles, Andrew. =(
+            if (m_artistName == "Andrew Hulshult")
+            {
+                if (m_trackName == "")
+                    m_trackName = GetFallbackTrackName(lumpName);
 
-            if (m_albumName == "")
-                m_albumName = GetFallbackAlbumName(lumpName);
+                if (m_albumName == "")
+                    m_albumName = GetFallbackAlbumName(lumpName);
+            }
 
             if (m_trackName == "" && m_albumName == "" && m_artistName == "")
                 return;
 
             // basic word wrapping.
-            int wrapWidth = 200;
+            int wrapWidth = 250;
             if (m_bigFont.StringWidth(m_trackName) > wrapWidth)
             {
                 Array<string> words;
@@ -106,6 +116,9 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
             m_alphaAnimation.Reset();
             m_yAnimation.Reset();
         }
+
+        if (m_trackName == "" && m_albumName == "" && m_artistName == "")
+            return;
 
         if (m_alphaAnimation.IsComplete() && m_yAnimation.IsComplete())
             return;
@@ -137,7 +150,7 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
             y + 10,
             align: 0.5,
             alpha: alpha,
-            color: Font.CR_Black);
+            color: Font.CR_Gray);
 
         self.DrawText(
             m_smallFont,
@@ -146,17 +159,17 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
             y + 18,
             align: 0.5,
             alpha: alpha,
-            color: Font.CR_Black);
+            color: Font.CR_DarkGray);
 
         self.DrawText(
             m_bigFont,
             m_trackName,
             x,
-            y + 50,
+            y + 55,
             align: 0.5,
             alpha: alpha,
-            color: Font.CR_Black,
-            scale: 0.75);
+            color: Font.CR_Red,
+            scale: 0.65);
     }
 
     ui int GetMusicLumpId(String name)
