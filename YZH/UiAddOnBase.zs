@@ -47,8 +47,8 @@ class YZH_UiAddOnBase : StaticEventHandler
         if (!m_isInitialized)
             return;
 
-        if (automapactive)
-            return;
+        ///if (automapactive)
+        ///    return;
 
         self.Draw(m_deltaTime);
     }

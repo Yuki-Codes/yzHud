@@ -9,8 +9,6 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
     private ui Font m_smallFont;
 
     private ui String m_currentTrack;
-    private ui YZH_KeyFrameAnimation m_alphaAnimation;
-    private ui YZH_KeyFrameAnimation m_yAnimation;
 
     private ui TextureId m_tapea;
     private ui TextureId m_tapeb;
@@ -27,21 +25,6 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
         m_smallFont = Font.FindFont('SmallFont');
         m_tapea = TexMan.CheckForTexture("yztapea");
         m_tapeb = TexMan.CheckForTexture("yztapeb");
-
-        m_alphaAnimation = new("YZH_KeyFrameAnimation");
-        m_alphaAnimation.AddKeyFrame(0, 0);
-        m_alphaAnimation.AddKeyFrame(2, 0);
-        m_alphaAnimation.AddKeyFrame(2.5, 1.0);
-        m_alphaAnimation.AddKeyFrame(10.0, 1.0);
-        m_alphaAnimation.AddKeyFrame(10.5, 0);
-
-        m_yAnimation = new("YZH_KeyFrameAnimation");
-        m_yAnimation.AddKeyFrame(0, 0);
-        m_yAnimation.AddKeyFrame(2, 0);
-        m_yAnimation.AddKeyFrame(2.5, 170);
-        m_yAnimation.AddKeyFrame(3.0, 150);
-        m_yAnimation.AddKeyFrame(10.0, 150);
-        m_yAnimation.AddKeyFrame(10.5, 0);
     }
 
     override void Draw(float deltaTime)
@@ -94,12 +77,9 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
             {
                 if (m_trackName == "")
                     m_trackName = GetFallbackTrackName(lumpName);
-
-                if (m_albumName == "")
-                    m_albumName = GetFallbackAlbumName(lumpName);
             }
 
-            if (m_trackName == "" && m_albumName == "" && m_artistName == "")
+            if (m_trackName == "")
                 return;
 
             // basic word wrapping.
@@ -122,21 +102,18 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
 
                 m_trackName.StripLeftRight();
             }
-
-            m_alphaAnimation.Reset();
-            m_yAnimation.Reset();
         }
+
+        if (!automapActive)
+            return;
 
         if (m_trackName == "" && m_albumName == "" && m_artistName == "")
             return;
 
-        if (m_alphaAnimation.IsComplete() && m_yAnimation.IsComplete())
-            return;
+        int y = GetHeight() - 100;
+        int x = GetWidth() - 120;
 
-        int y = GetHeight() - m_yAnimation.Update(deltaTime);
-        int x = GetWidth() - 200;
-
-        float alpha = m_alphaAnimation.Update(deltaTime);
+        float alpha = 1.0f;
 
         m_frameTime += deltaTime;
         if (m_frameTime > 0.33)
@@ -234,49 +211,6 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
         if (track == "D_DM2TTL") return "untitled";
         if (track == "D_DM2INT") return "Intermission To DOOM II";
         if (track == "D_READ_M") return "Read Me While Listening to This";
-
-        return track;
-    }
-
-    private ui String GetFallbackAlbumName(string track)
-    {
-        // Doom 2 tracks
-        if (track == "D_RUNNIN"
-        || track == "D_RUNNI2"
-        || track == "D_STALKS"
-        || track == "D_STLKS2"
-        || track == "D_STLKS3"
-        || track == "D_COUNTD"
-        || track == "D_COUNT2"
-        || track == "D_BETWEE"
-        || track == "D_DOOM"
-        || track == "D_DOOM2"
-        || track == "D_THE_DA"
-        || track == "D_THEDA2"
-        || track == "D_THEDA3"
-        || track == "D_SHAWN"
-        || track == "D_SHAWN2"
-        || track == "D_SHAWN3"
-        || track == "D_DDTBLU"
-        || track == "D_DDTBL2"
-        || track == "D_DDTBL3"
-        || track == "D_IN_CIT"
-        || track == "D_DEAD"
-        || track == "D_DEAD2"
-        || track == "D_ROMERO"
-        || track == "D_ROMER2"
-        || track == "D_MESSAG"
-        || track == "D_MESSG2"
-        || track == "D_AMPIE"
-        || track == "D_ADRIAN"
-        || track == "D_TENSE"
-        || track == "D_OPENIN"
-        || track == "D_EVIL"
-        || track == "D_ULTIMA"
-        || track == "D_DM2TTL"
-        || track == "D_DM2INT"
-        || track == "D_READ_M")
-            return "DOOM II";
 
         return track;
     }
