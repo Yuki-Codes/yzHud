@@ -55,21 +55,24 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
                 }
                 else if (data.Left(4) == "MThd")
                 {
-                    parser = new("YZH_MidiParser");
+                    ////parser = new("YZH_MidiParser");
                 }
                 else
                 {
                     // unknown file format.
                 }
 
-                parser.Parse(data);
+                if (parser != null)
+                {
+                    parser.Parse(data);
 
-                m_artistName = parser.Artist;
-                m_artistName.Replace("\"", "");
-                m_albumName = parser.Album;
-                m_albumName.Replace("\"", "");
-                m_trackName = parser.Title;
-                m_trackName.Replace("\"", "");
+                    m_artistName = parser.Artist;
+                    m_artistName.Replace("\"", "");
+                    m_albumName = parser.Album;
+                    m_albumName.Replace("\"", "");
+                    m_trackName = parser.Title;
+                    m_trackName.Replace("\"", "");
+                }
             }
 
             // Why you didn't tag titles, Andrew. =(
