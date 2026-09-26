@@ -39,7 +39,7 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
             String lumpName = m_currentTrack.MakeUpper();
             lumpName.Replace("$MUSIC_", "D_");
 
-            int lumpId = GetMusicLumpId(lumpName);
+            int lumpId = YZH_Lumps.GetLumpId(lumpName);
             if (lumpId != -1)
             {
                 string data = Wads.ReadLump(lumpId);
@@ -158,20 +158,6 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
             color: Font.CR_Red,
             scale: 0.65);
     }
-
-    ui int GetMusicLumpId(String name)
-    {
-        for (int i = Wads.GetNumLumps(); i>= 0; i--)
-        {
-            if (Wads.GetLumpName(i) == name)
-            {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
 
     private ui String GetFallbackTrackName(string track)
     {

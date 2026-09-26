@@ -8,6 +8,8 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
     private ui YZH_KeyFrameAnimation m_mapNameAnimation;
     private ui YZH_KeyFrameAnimation m_authorAnimation;
 
+    private ui String m_episodeName;
+
     override void Initialize()
     {
         m_bigFont = Font.FindFont('BigFont');
@@ -43,6 +45,8 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
             m_mapNameAnimation.Reset();
             m_authorAnimation.Reset();
             m_currentLevel = level.LevelNum;
+
+            m_episodeName = GetEpisodeName();
         }
 
         if (m_episodeAnimation.IsComplete()
@@ -54,7 +58,7 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
 
         self.DrawText(
             m_smallFont,
-            level.GetEpisodeName(),
+            m_episodeName,
             GetWidth() / 2,
             y,
             align: 0.5,
@@ -78,5 +82,17 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
             align: 0.5,
             alpha:m_authorAnimation.Update(deltaTime),
             color: Font.CR_White);
+    }
+
+    private ui String GetEpisodeName()
+    {
+        String ep = level.GetEpisodeName();
+
+        if (ep == "Hell On Earth")
+        {
+            ep = YZH_Game.GetGameTitle();
+        }
+
+        return ep;
     }
 }

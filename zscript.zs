@@ -3,6 +3,9 @@ version "5.00"
 #include "Gutamatics/Include.zsc"
 #include "YZH/Utils/Interpolator.zs"
 #include "YZH/Utils/Math.zs"
+#include "YZH/Utils/Lumps.zs"
+#include "YZH/Utils/Game.zs"
+
 #include "YZH/StatusBar.zs"
 
 #include "YZH/Animation/KeyFrame.zs"

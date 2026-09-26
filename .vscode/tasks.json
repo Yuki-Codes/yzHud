@@ -4,7 +4,7 @@
 		{
 			"type": "shell",
 			"label": "UZDoom",
-			"command": "open -n -W /Applications/Games/UZDoom.app --args -file btsx_e1a.wad -file btsx_e1b.wad -loadGame save00",
+			"command": "open -n -W /Applications/Games/UZDoom.app --args -file btsx_e2a.wad -file btsx_e2b.wad -loadGame save00",
 			"problemMatcher": "$gcc",
 			"icon": {
 				"id": "run",
