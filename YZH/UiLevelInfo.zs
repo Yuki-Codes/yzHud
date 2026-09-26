@@ -4,7 +4,6 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
     private ui Font m_smallFont;
 
     private ui int m_currentLevel;
-    private ui YZH_KeyFrameAnimation m_episodeAnimation;
     private ui YZH_KeyFrameAnimation m_mapNameAnimation;
     private ui YZH_KeyFrameAnimation m_authorAnimation;
 
@@ -14,13 +13,6 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
     {
         m_bigFont = Font.FindFont('BigFont');
         m_smallFont = Font.FindFont('SmallFont');
-
-        m_episodeAnimation = new("YZH_KeyFrameAnimation");
-        m_episodeAnimation.AddKeyFrame(0, 0);
-        m_episodeAnimation.AddKeyFrame(2.0, 0);
-        m_episodeAnimation.AddKeyFrame(5.0, 1.0);
-        m_episodeAnimation.AddKeyFrame(10.0, 1.0);
-        m_episodeAnimation.AddKeyFrame(12.0, 0.0);
 
         m_mapNameAnimation = new("YZH_KeyFrameAnimation");
         m_mapNameAnimation.AddKeyFrame(0, 0);
@@ -41,29 +33,16 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
     {
         if (m_currentLevel != level.LevelNum)
         {
-            m_episodeAnimation.Reset();
             m_mapNameAnimation.Reset();
             m_authorAnimation.Reset();
             m_currentLevel = level.LevelNum;
-
-            m_episodeName = GetEpisodeName();
         }
 
-        if (m_episodeAnimation.IsComplete()
-            && m_mapNameAnimation.IsComplete()
+        if (m_mapNameAnimation.IsComplete()
             && m_authorAnimation.IsComplete())
             return;
 
         int y = (GetHeight() / 2) - 100;
-
-        self.DrawText(
-            m_smallFont,
-            m_episodeName,
-            GetWidth() / 2,
-            y,
-            align: 0.5,
-            alpha:m_episodeAnimation.Update(deltaTime),
-            color: Font.CR_Red);
 
         self.DrawText(
             m_bigFont,
@@ -82,17 +61,5 @@ class YZH_UiLevelInfo : YZH_UiAddOnBase
             align: 0.5,
             alpha:m_authorAnimation.Update(deltaTime),
             color: Font.CR_White);
-    }
-
-    private ui String GetEpisodeName()
-    {
-        String ep = level.GetEpisodeName();
-
-        if (ep == "Hell On Earth")
-        {
-            ep = YZH_Game.GetGameTitle();
-        }
-
-        return ep;
     }
 }

@@ -4,7 +4,6 @@ version "5.00"
 #include "YZH/Utils/Interpolator.zs"
 #include "YZH/Utils/Math.zs"
 #include "YZH/Utils/Lumps.zs"
-#include "YZH/Utils/Game.zs"
 
 #include "YZH/StatusBar.zs"
 
