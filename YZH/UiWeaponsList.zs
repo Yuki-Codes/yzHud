@@ -279,6 +279,7 @@ class YZH_WeaponInfo
 
     private ui TextureId m_weaponBoxTextureId;
     private ui Font m_font;
+    private ui Font m_bigFont;
 
     private ui YZH_Interpolator m_offset;
     private ui YZH_Interpolator m_boxAlpha;
@@ -288,6 +289,7 @@ class YZH_WeaponInfo
     ui void Init()
     {
         m_font = Font.FindFont('SmallFont');
+        m_bigFont = Font.FindFont('BigFont');
         m_weaponBoxTextureId = TexMan.CheckForTexture("wpnbox");
 
         m_offset = new ("YZH_Interpolator");
@@ -367,9 +369,21 @@ class YZH_WeaponInfo
 
         list.DrawText(
             m_font,
-            String.Format("%d: %s", self.Slot, self.Name),
+            self.Name,
             xPos + offset + 3,
             yPos + height - m_font.GetHeight(),
             alpha: self.m_textAlpha.Update(deltaTime));
+
+        if (self.Instance.Ammo1 && self.Instance.Ammo2)
+        {
+            int totalAmmo = self.Instance.Ammo1.Amount + self.Instance.Ammo2.Amount;
+
+            list.DrawText(
+                m_bigFont,
+                String.Format("%d", totalAmmo),
+                xPos + offset + 75,
+                yPos + height - m_bigFont.GetHeight() - m_font.GetHeight() - 4,
+                alpha: self.m_textAlpha.Update(deltaTime));
+        }
     }
 }

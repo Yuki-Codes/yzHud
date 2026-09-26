@@ -110,8 +110,8 @@ class YZH_UiMusicInfo : YZH_UiAddOnBase
         if (m_trackName == "" && m_albumName == "" && m_artistName == "")
             return;
 
-        int y = GetHeight() - 100;
-        int x = GetWidth() - 120;
+        int y = GetHeight() - 120;
+        int x = GetWidth() - 110;
 
         float alpha = 1.0f;
 
